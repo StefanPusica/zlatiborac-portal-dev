@@ -1,0 +1,43 @@
+# Zlatiborac Portal - Dev
+
+Lokalna DEV verzija Zlatiborac portala. Izvršava se na Laragon serveru (localhost).
+Nema build procesa — izmene u fajlovima su odmah vidljive u browseru.
+
+## Pokretanje
+
+Laragon mora biti aktivan (Apache + PHP). Portal je dostupan na `localhost`.
+
+## Arhitektura
+
+- **Backend:** PHP, bez frameworka. Svaki fajl je view koji se učitava dinamički.
+- **App shell:** `index.php` u root-u — učitava sve ostale view-ove
+- **Frontend:** jQuery, jQuery UI (datepicker), Select2, Bootstrap 3
+- **AJAX:** `urlContent(container, url, args, callback)` — globalna helper funkcija za učitavanje remote view-ova u DOM
+- **Autorizacija:** `$login->getUserGroup()` + `UserNivo::$*` konstante; svaka stranica definiše `$arrPrava` niz dozvoljenih rola
+
+## Struktura
+
+```
+index.php                    # App shell
+planiranje/                  # Planiranje (artikli, sirovine, planovi, nalozi)
+planiranje_procesa/          # Planiranje procesa proizvodnje po periodu (aktivni razvoj)
+```
+
+## Konvencije
+
+- PHP short tags (`<?=`, `<?`) su standard
+- HTML/PHP/JS izmešano u istom fajlu
+- Srpski jezik za UI labele
+- URL promenljive dolaze iz parent context-a: `$proplaniranje_url`, `$public_url`, `$pro20_url`, `$img_url`
+- Filter forma: `mjsPopover` div + `mjsSearch()` jQuery plugin
+- Sidebar: `.mSideBar` div sa `ucitajSideBar(id)` funkcijom
+
+## Aktivni razvoj — planiranje_procesa/
+
+Planiranje procesa proizvodnje po periodu. Filter: period, proces, proizvod, lot.
+
+| Fajl | Opis |
+|------|------|
+| `index.php` | Glavni view — filter forma, sidebar, JS logika |
+| `pregled.php` | Prikaz podataka (učitava se u `.mContentBody`) |
+| `sidebar_nalog.php` | Detalji naloga u slideover sidebaru |
