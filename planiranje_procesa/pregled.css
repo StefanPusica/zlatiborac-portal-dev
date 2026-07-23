@@ -1,0 +1,23 @@
+ul.mUl {
+    list-style: none;
+    display: flex;
+    justify-content: space-around;
+    margin: 0px;
+    padding: 0px;
+}
+
+ul.mUl > li {
+    list-style-type: none;
+    font-size: small;
+}
+
+ul.mUl > li:before {
+    margin-right:     0.5em;
+    width:            0.7em;
+    height:           0.7em;
+    display:          inline-block;
+    vertical-align:   middle;
+    border-radius: 50%;
+    background-color: orange;
+    content:          ' '
+}
