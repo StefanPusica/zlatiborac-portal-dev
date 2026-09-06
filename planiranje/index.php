@@ -1,5 +1,4 @@
 <style>
-
     .planHolder {
         padding: 0px;
         overflow: hidden;
@@ -29,7 +28,7 @@
         /*background-color: #ddd;*/
     }
 
-    .pageHolder{
+    .pageHolder {
         /*background-color: #ddd;*/
         display: flex;
         flex-direction: row;
@@ -41,7 +40,7 @@
         position: relative;
         height: 5px;
         /* background-color: rgba(170, 170, 170, .2); */
-        cursor:ns-resize;
+        cursor: ns-resize;
         text-align: center;
         color: white;
         box-shadow: 0 0 3px rgba(0, 0, 0, .4);
@@ -50,6 +49,7 @@
         /*padding-top: 20px;*/
         /* left: 283px; */
     }
+
     .mPageSpliter:hover {
         background-color: rgba(170, 170, 170, .5);
         box-shadow: 0 0 5px rgba(0, 0, 0, .5);
@@ -80,32 +80,34 @@
     }
 
     .choosePlanHolder {
-        height:30px;
+        height: 30px;
     }
 
     .eSirovina {
         font-size: 10px !important;
     }
+
     .ePlanArtikal {
         font-size: 10px !important;
     }
 
-    .proizvodSelector {
-
-    }
+    .proizvodSelector {}
 
     .proizvodSelector:hover {
         background-color: #b8deff;
         cursor: pointer;
     }
+
     .proizvodSelector:active {
         background-color: #43a4f9 !important;
         color: #fff;
     }
+
     .proizvodSelector.active {
         background-color: #43a4f9 !important;
         color: #fff;
     }
+
     .btnLeftLink {
         width: 20px;
         position: fixed;
@@ -126,7 +128,7 @@
         -webkit-user-select: none;
         -ms-user-select: none;
         user-select: none;
-        cursor:pointer;
+        cursor: pointer;
         border: 1px solid #efeded;
         /*border-left: 0px;*/
     }
@@ -134,7 +136,6 @@
     .btnLeftLink.active {
         background-color: #acd2ff !important;
     }
-
 </style>
 
 <ol class="breadcrumb mjsBreadcrumb">
@@ -145,7 +146,7 @@
         <?
         #if (isSessionUserAdmin()) {
         ?>
-        <button type="button" id="btnExcel" class="btn btn-default btn-sm" style="margin-top: -5px; display:none;" ><span class="glyphicon icon-file-excel-o"></span> Preuzmi excel</button>
+        <button type="button" id="btnExcel" class="btn btn-default btn-sm" style="margin-top: -5px; display:none;"><span class="glyphicon icon-file-excel-o"></span> Preuzmi excel</button>
         <?
         #}
         ?>
@@ -161,7 +162,7 @@
 <div class="leftBar" style="">
     <?
     if ($pravoUpravljanja) {
-        ?>
+    ?>
 
         <div class="choosePlanHolder">
 
@@ -179,7 +180,7 @@
             #}
             ?>
         </div>
-        <?
+    <?
     }
     ?>
 
@@ -218,7 +219,6 @@
 </div>
 
 <script>
-
     var oBlenda = null;
     var holder = null;
     var holderHeight = 0;
@@ -236,7 +236,7 @@
     var selectedPro = 0;
     var samoMojiArtikli = 0;
 
-    (function ($) {
+    (function($) {
 
         $("#selPlan").select2();
 
@@ -249,7 +249,7 @@
         topRow = $(".topHolder");
         bottomRow = $(".commandHolder");
 
-        $(window).resize(function () {
+        $(window).resize(function() {
             setLayout();
         });
 
@@ -258,12 +258,12 @@
         oBlenda.hide();
 
         // loader();
-        splitter.on("mousedown.gdf", function (e) {
+        splitter.on("mousedown.gdf", function(e) {
             e.preventDefault();
             $("body").addClass("gdfHResizing");
             var splBar = $(this);
 
-            $("body").on("mousemove.gdf", function (e) {
+            $("body").on("mousemove.gdf", function(e) {
                 e.preventDefault();
 
                 if (!$("body").hasClass("gdfHResizing"))
@@ -277,14 +277,17 @@
                 pos = pos > bottomColumnMinHeight ? pos : bottomColumnMinHeight;
                 pos = pos > holder.innerHeight() - splitter.height() - bottomColumnMinHeight ? holder.innerHeight() - splitter.height() - bottomColumnMinHeight : pos;
                 topRow.height(pos);
-                bottomRow.css({top: pos + sb.height(), height: h - pos - sb.height()});
+                bottomRow.css({
+                    top: pos + sb.height(),
+                    height: h - pos - sb.height()
+                });
 
                 perc = (topRow.height() / holderHeight) * 100;
 
                 zWrapperResize();
                 zSirWrapperResize();
 
-            }).on("mouseup.gdf", function () {
+            }).on("mouseup.gdf", function() {
                 $(this).off("mousemove.gdf").off("mouseup.gdf"); // .clearUnselectable();
                 delete splBar;
                 $("body").removeClass("gdfHResizing");
@@ -300,7 +303,7 @@
 
         loadPlan();
 
-        $(document).on("click", ".btnLeftLink", function () {
+        $(document).on("click", ".btnLeftLink", function() {
             if (parseInt($(".leftBar").width()) == 0) {
                 $(".leftBar").width(leftBarWidth);
                 $(this).removeClass("active")
@@ -310,7 +313,7 @@
             }
         });
 
-        $("#selPlan").change(function () {
+        $("#selPlan").change(function() {
             selectedPlan = $(this).val();
             selectedPro = 0;
             loadPlan();
@@ -320,30 +323,30 @@
             $("#btnExcel").hide();
         });
 
-        $(document).on("click", ".btnAddArtikal", function () {
+        $(document).on("click", ".btnAddArtikal", function() {
             // console.log("add-artikle")
             var p = $(this).data("row");
             urlModal("<?= "$proplaniranje_url/add_artikal/"; ?>" + p, "static")
         });
 
-        $(document).on("click", ".btnAddProizvodArtikal", function () {
+        $(document).on("click", ".btnAddProizvodArtikal", function() {
             var p = $(this).data("row");
             urlModal("<?= "$proplaniranje_url/izborProizvoda/"; ?>" + p, "static")
         });
 
-        $(document).on("click", ".btnAddSirovProizvodArtikal", function () {
+        $(document).on("click", ".btnAddSirovProizvodArtikal", function() {
             var p = $(this).data("row");
             urlModal("<?= "$proplaniranje_url/izborSirovogProizvoda/"; ?>" + p, "static")
         });
 
 
-        $(document).on("click", ".btnRemoveArtikle", function () {
+        $(document).on("click", ".btnRemoveArtikle", function() {
             var p = $(this).data("row");
 
             urlModal("<?= "$proplaniranje_url/remove_artikli/"; ?>" + p, "static")
         });
 
-        $(document).on("click", ".proizvodSelector", function () {
+        $(document).on("click", ".proizvodSelector", function() {
 
             $(".proizvodSelector").removeClass("active");
             $(this).addClass("active")
@@ -356,18 +359,18 @@
             $("#btnExcel").show();
         });
 
-        $(document).on("click", ".btnGenerator", function () {
+        $(document).on("click", ".btnGenerator", function() {
             var p = $(this).data("row");
             urlModal("<?= "$proplaniranje_url/generator/"; ?>" + p, "static")
         });
 
-        $(document).on("click", ".btnPPGenerator", function () {
+        $(document).on("click", ".btnPPGenerator", function() {
             var p = $(this).data("row");
             urlModal("<?= "$proplaniranje_url/pp_generator/"; ?>" + p, "static")
         });
 
 
-        $(document).on("click", ".btnGeneratorProizvod", function (e) {
+        $(document).on("click", ".btnGeneratorProizvod", function(e) {
             e.preventDefault();
             e.stopPropagation();
             var p = $(this).data("row");
@@ -375,7 +378,7 @@
             urlModal("<?= "$proplaniranje_url/generator_proizvod/"; ?>" + p + "/" + pp, "static")
         });
 
-        $(document).on("click", ".eProizvod", function () {
+        $(document).on("click", ".eProizvod", function() {
             var n = $(this).data("nalog");
             var p = $(this).data("proces");
             var pr = $(this).data("proizvod");
@@ -386,7 +389,7 @@
             loadProcesSirovine(pr, p, n);
         });
 
-        $(document).on("mouseover", ".eProizvod", function () {
+        $(document).on("mouseover", ".eProizvod", function() {
             var n = $(this).data("nalog-parent");
 
             $('.eProizvod').removeClass("parent");
@@ -394,7 +397,7 @@
 
         });
 
-        $(document).on("click", ".btnHideSirFilter", function () {
+        $(document).on("click", ".btnHideSirFilter", function() {
             var n = $(this).data("nalog");
             var p = $(this).data("proces");
             var pr = $(this).data("proizvod");
@@ -404,47 +407,47 @@
             loadProcesSirovine(pr, p, 0);
         });
 
-        $(document).on("click", ".btnConnector", function () {
+        $(document).on("click", ".btnConnector", function() {
             var n = $(this).data("nalog");
             var p = $(this).data("proces");
 
             urlModal("<?= "$proplaniranje_url/add_rn/"; ?>" + n + "/" + p, "static")
         });
 
-        $(document).on("click", ".btnVezaNalog", function () {
+        $(document).on("click", ".btnVezaNalog", function() {
             var n = $(this).data("nalog");
             var s = $(this).data("nalog-sifra");
             // urlLocationNewWindow("<?= "$kvalitetradninalog_url/"; ?>" + n);
             urlLocationNewWindow("<?= "$kvalitetradninalozi_url?master="; ?>" + s);
         });
 
-        $(document).on("click", ".btnVirtualniNalog", function () {
+        $(document).on("click", ".btnVirtualniNalog", function() {
             var n = $(this).data("nalog");
 
             urlModal("<?= "$proplaniranje_url/virtuelni_nalog/"; ?>" + n, "static")
         });
 
-        $(document).on("click", ".btnRnPretraga", function (e) {
+        $(document).on("click", ".btnRnPretraga", function(e) {
             e.preventDefault();
             contentLoader();
             contentRnLoader(0, 0, 0);
         });
 
-        $(document).on("click", ".btnProizvodPretraga", function (e) {
+        $(document).on("click", ".btnProizvodPretraga", function(e) {
             e.preventDefault();
             contentProizvodLoader();
         });
 
-        $(document).on("change", ".chNalogList", function () {
+        $(document).on("change", ".chNalogList", function() {
 
         });
 
-        $(document).on("change", "#sirovProizvodSel", function (e) {
+        $(document).on("change", "#sirovProizvodSel", function(e) {
             e.preventDefault();
             contentSirovProizvodLoader();
         });
 
-        $(document).on("click", ".rowRn", function () {
+        $(document).on("click", ".rowRn", function() {
             $(".rowRnTr").removeClass("aktivan")
             $(this).parent().addClass("aktivan")
             var n = $(this).parent().data('row')
@@ -453,13 +456,13 @@
             contentRnLoader(n, pn, p);
         });
 
-        $(document).on("click", ".btnAddPlan", function (e) {
+        $(document).on("click", ".btnAddPlan", function(e) {
             e.preventDefault();
 
             urlModal("<?= "$proplaniranje_url/add_plan"; ?>", "static")
         });
 
-        $(document).on("click", ".ePlanArtikal", function (e) {
+        $(document).on("click", ".ePlanArtikal", function(e) {
             e.preventDefault();
 
             var p = $(this).parent().data("plan")
@@ -468,10 +471,10 @@
             urlModal("<?= "$proplaniranje_url/change_artikal/"; ?>" + p + '/' + a, "static")
         });
 
-<?
-if ($pravoUpravljanja) {
-    ?>
-            $(document).on("click", ".eArtSirovina", function (e) {
+        <?
+        if ($pravoUpravljanja) {
+        ?>
+            $(document).on("click", ".eArtSirovina", function(e) {
                 e.preventDefault();
 
                 var i = $(this).parent().data("row")
@@ -481,15 +484,15 @@ if ($pravoUpravljanja) {
 
                 urlModal("<?= "$proplaniranje_url/change_sirovina_artikal/"; ?>" + i + '/' + n, "static")
             });
-    <?
-}
-?>
-        $("#samoMojiArtikli").change(function () {
+        <?
+        }
+        ?>
+        $("#samoMojiArtikli").change(function() {
             samoMojiArtikli = this.checked ? 1 : 0;
             loadPlan();
         });
 
-        $("#btnExcel").click(function (e) {
+        $("#btnExcel").click(function(e) {
             window.location = "<?= "$proplaniranje_url/planiranje_excel?"; ?>" + "plan=" + selectedPlan + "&proizvod=" + selectedPro;
             e.preventDefault();
         });
@@ -503,7 +506,10 @@ if ($pravoUpravljanja) {
         var oBlenda = $("#blenda");
         oBlenda.show();
         // $("#selTip").val(vrsPregled);
-        urlContent(o, "<?= "$proplaniranje_url/xPlan"; ?>", {plan: selectedPlan, samoMojiArtikli: samoMojiArtikli}, function () {
+        urlContent(o, "<?= "$proplaniranje_url/xPlan"; ?>", {
+            plan: selectedPlan,
+            samoMojiArtikli: samoMojiArtikli
+        }, function() {
             oBlenda.hide();
         });
     }
@@ -514,7 +520,10 @@ if ($pravoUpravljanja) {
         var oBlenda = $("#blenda");
         oBlenda.show();
         // $("#selTip").val(vrsPregled);
-        urlContent(o, "<?= "$proplaniranje_url/xProizvod"; ?>", {plan: selectedPlan, proizvod: selectedPro}, function () {
+        urlContent(o, "<?= "$proplaniranje_url/xProizvod"; ?>", {
+            plan: selectedPlan,
+            proizvod: selectedPro
+        }, function() {
             scrollSync(".scrollSync")
             zWrapperResize();
             oBlenda.hide();
@@ -524,12 +533,13 @@ if ($pravoUpravljanja) {
     function loadSirovine() {
         var o = $(".commandHolder");
 
-        console.log(" ls: " + selectedPlan + " proizvod: " + selectedPro)
-
         var oBlenda = $("#blenda");
         oBlenda.show();
         // $("#selTip").val(vrsPregled);
-        urlContent(o, "<?= "$proplaniranje_url/xSirovine"; ?>", {plan: selectedPlan, proizvod: selectedPro}, function () {
+        urlContent(o, "<?= "$proplaniranje_url/xSirovine"; ?>", {
+            plan: selectedPlan,
+            proizvod: selectedPro
+        }, function() {
             scrollSync(".scrollSync")
             zSirWrapperResize();
             oBlenda.hide();
@@ -542,9 +552,12 @@ if ($pravoUpravljanja) {
         //var oBlenda = $("#blenda");
         // oBlenda.show();
 
-        console.log(" lps: " + selectedPlan + " proizvod: " + proizvod + " proces: " + proces + " nalog: " + nalog)
-
-        urlContent(o, "<?= "$proplaniranje_url/xProcesSirovine"; ?>", {plan: selectedPlan, proizvod: proizvod, proces: proces, nalog: nalog}, function () {
+        urlContent(o, "<?= "$proplaniranje_url/xProcesSirovine"; ?>", {
+            plan: selectedPlan,
+            proizvod: proizvod,
+            proces: proces,
+            nalog: nalog
+        }, function() {
             scrollSync(".scrollSync")
             zSirWrapperResize();
             // oBlenda.hide();
@@ -569,20 +582,27 @@ if ($pravoUpravljanja) {
         newW = newW > topColumnMinHeight ? newW : topColumnMinHeight;
         newW = newW > totalH - splHeight - bottomColumnMinHeight ? totalH - splHeight - bottomColumnMinHeight : newW;
 
-        topRow.animate({height: newW}, animTime, function () {
+        topRow.animate({
+            height: newW
+        }, animTime, function() {
             // $(this).css("overflow-x", "auto")
         });
         // splitter.animate({left: newW}, animTime);
         var rHeight = parseFloat(Math.ceil(totalH - newW - splHeight)).toFixed(0)
 
-        bottomRow.animate({top: newW + splitter.height(), height: rHeight}, animTime, function () {
+        bottomRow.animate({
+            top: newW + splitter.height(),
+            height: rHeight
+        }, animTime, function() {
             $(this).css("overflow", "auto")
         });
 
         var pihPos = $(".planItemHolder").position();
         var lmW = $(".btnLeftLink").width();
         var blLeft = parseFloat(pihPos.left) - parseFloat(lmW);
-        $(".btnLeftLink").css({left: blLeft});
+        $(".btnLeftLink").css({
+            left: blLeft
+        });
     }
 
     function initLayout() {
@@ -594,8 +614,12 @@ if ($pravoUpravljanja) {
         var topColHeight = holderHeight * perc / 100;
         topColHeight = topColHeight > holderHeight - splitterHeight - bottomColumnMinHeight ? holderHeight - splitterHeight - bottomColumnMinHeight : topColHeight;
         topRow.height(topColHeight); // .css({left: 0});
-        splitter.css({top: 0});
-        bottomRow.height(holderHeight - topColHeight - splitterHeight).css({top: topRow.height() + splitterHeight});
+        splitter.css({
+            top: 0
+        });
+        bottomRow.height(holderHeight - topColHeight - splitterHeight).css({
+            top: topRow.height() + splitterHeight
+        });
         jsLog("bottomHeight: " + bottomRow.height());
 
     }
@@ -626,16 +650,16 @@ if ($pravoUpravljanja) {
 
     function scrollSync(selector) {
         let active = null;
-        document.querySelectorAll(selector).forEach(function (element) {
-            element.addEventListener("mouseenter", function (e) {
+        document.querySelectorAll(selector).forEach(function(element) {
+            element.addEventListener("mouseenter", function(e) {
                 active = e.target;
             });
 
-            element.addEventListener("scroll", function (e) {
+            element.addEventListener("scroll", function(e) {
                 if (e.target !== active)
                     return;
 
-                document.querySelectorAll(selector).forEach(function (target) {
+                document.querySelectorAll(selector).forEach(function(target) {
                     if (active === target)
                         return;
 
@@ -645,6 +669,4 @@ if ($pravoUpravljanja) {
             });
         });
     }
-
-
 </script>

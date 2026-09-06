@@ -124,22 +124,20 @@
 
 <script>
 
-    (function ($) {
+    document.addEventListener('click', function (e) {
+        var nalogRow = e.target.closest('.nalogRow');
+        if (nalogRow) {
+            urlLocationNewWindow("<?= "$kvalitetradninalog_url/"; ?>" + nalogRow.parentElement.dataset.row);
+        }
+    });
 
+    function resizeSidebarContent() {
+        var sc = document.querySelector('.sidebarContent');
+        var sb = document.querySelector('.mSideBar');
+        if (sc && sb) sc.style.height = (sb.clientHeight - sc.getBoundingClientRect().top + 20) + 'px';
+    }
 
-        $(document).on("click", ".nalogRow", function () {
-            var i = $(this).parent().data("row")
-            urlLocationNewWindow("<?= "$kvalitetradninalog_url/"; ?>" + i);
-        });
-
-
-        $(window).resize(function () {
-            $(".sidebarContent").height($(".mSideBar").height() - $(".sidebarContent").offset().top + 20)
-        });
-
-        $(".sidebarContent").height(($(".mSideBar").height() - $(".sidebarContent").offset().top) + 20);
-
-    })(jQuery);
-
+    window.addEventListener('resize', resizeSidebarContent);
+    resizeSidebarContent();
 
 </script>

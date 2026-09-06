@@ -1,5 +1,3 @@
-<link href="<?= $proplaniranje_url; ?>/pregled.css" rel="stylesheet">
-
 <div class="mFlexWrapper">
     <div class="mFlexContent">
         <div class="mFlexContainer linijaProcesi">
