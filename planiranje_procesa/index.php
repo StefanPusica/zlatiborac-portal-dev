@@ -18,6 +18,12 @@
         <li class="active"><span id="periodInfo"><?= Datum::stamp2date($start) . " - " . Datum::stamp2date($kraj); ?></span></li>
         <li class="active">Planiranje procesa</li>
         <li class="pull-right">
+            <button type="button" id="btnSave" class="btn btn-success btn-xs" style="padding: 4px 10px;margin-top: -5px; margin-right: 4px;" title="Sačuvaj raspored">
+                <span class="glyphicon glyphicon-floppy-disk"></span> Sačuvaj
+            </button>
+            <button type="button" id="btnGlobalLock" class="btn btn-warning btn-xs locked" style="padding: 4px 10px;margin-top: -5px; margin-right: 4px;" title="Otključaj sve">
+                <span class="glyphicon glyphicon-lock"></span>
+            </button>
             <button type="button" id="btnFilterForm" class="btn btn-info btn-xs" style="padding: 4px 10px;margin-top: -5px; margin-right: -12px;"><span class="glyphicon glyphicon-search"></span> Filter</button>
         </li>
     </ol>
@@ -135,6 +141,34 @@
         }
     });
 
+    document.getElementById('btnSave').addEventListener('click', function () {
+        document.querySelectorAll('.processItem').forEach(function (item) {
+            var rowEl = item.querySelector('[data-row]');
+            if (!rowEl) return;
+            console.log({
+                id: rowEl.dataset.row,
+                start_time: item.dataset.startTime || null,
+                end_time: item.dataset.endTime || null
+            });
+        });
+    });
+
+    document.getElementById('btnGlobalLock').addEventListener('click', function () {
+        setGlobalLock(this.classList.contains('locked') ? false : true);
+    });
+
+    function setGlobalLock(locked) {
+        var btn = document.getElementById('btnGlobalLock');
+        document.querySelectorAll('.mFlexBox').forEach(function (box) {
+            box.classList.toggle('locked', locked);
+        });
+        btn.classList.toggle('locked', locked);
+        btn.classList.toggle('btn-warning', locked);
+        btn.classList.toggle('btn-default', !locked);
+        btn.querySelector('.glyphicon').className = 'glyphicon glyphicon-' + (locked ? 'lock' : 'pencil');
+        btn.title = locked ? 'Otključaj sve' : 'Zaključaj sve';
+    }
+
     loader();
     homeRowResize();
     window.addEventListener('resize', homeRowResize);
@@ -152,12 +186,6 @@
         var btnInfo = e.target.closest('.btnArtikalInfo');
         if (btnInfo) {
             ucitajSideBar(btnInfo.dataset.row);
-        }
-
-        var btnLock = e.target.closest('.btnLock');
-        if (btnLock) {
-            e.stopPropagation();
-            btnLock.closest('.mFlexBox').classList.toggle('locked');
         }
 
         var slot = e.target.closest('.timeSlotRow');
@@ -179,6 +207,7 @@
             homeRowResize();
             initDragDrop();
             initResize();
+            setGlobalLock(true);
             b.style.display = 'none';
         });
     }

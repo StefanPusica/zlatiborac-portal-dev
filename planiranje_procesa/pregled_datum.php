@@ -1,10 +1,6 @@
 <div class="mFlexBox status locked" style="<?= $isWeekend ? "min-width: 160px;max-width: 160px;" : ''; ?>">
     <div class="boxTitle" style="background-color: <?= $color; ?>;">
         <span><?= Datum::stamp2date($date); ?></span>
-        <button class="btnLock">
-            <i class="glyphicon glyphicon-lock ico-lock"></i>
-            <i class="glyphicon glyphicon-pencil ico-unlock"></i>
-        </button>
     </div>
 
     <div class="boxList" id="statusList_<?= $date; ?>" style="position:relative; overflow-y: scroll;" data-datum="<?= $date; ?>">
