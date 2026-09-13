@@ -1,213 +1,6 @@
 
 <link href="<?= $public_url; ?>/css/mjsFlexPool.css" rel="stylesheet">
-<style>
-    .mFlexBox {
-        min-width: 320px;
-        max-width: 320px;
-    }
-
-    .mSideBar {
-        position: fixed;
-        top: 57px;
-        width: 640px;
-        right: -640px;
-        height: 100%;
-        z-index: 1000;
-        background-color: #fff;
-        -webkit-transition: all 350ms cubic-bezier(0.6, 0.05, 0.28, 0.91);
-        transition: all 350ms cubic-bezier(0.6, 0.05, 0.28, 0.91);
-        -moz-box-shadow: 0 0 8px 4px rgba(0, 0, 0, 0.15);
-        -o-box-shadow: 0 0 8px 4px rgba(0, 0, 0, 0.15);
-        -webkit-box-shadow: 0 0 8px 4px rgba(0, 0, 0, 0.15);
-        box-shadow: 0 0 8px 4px rgba(0, 0, 0, 0.15);
-        padding: 4px;
-        border-top-left-radius: 8px;
-    }
-
-    .mSideBar.active {
-        right: 0px;
-        opacity: 1;
-    }
-
-    .boxTitle {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 5px 8px;
-        color: #fff;
-        font-size: 11px;
-        font-weight: 600;
-        user-select: none;
-        letter-spacing: 0.01em;
-    }
-
-    .btnLock {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(0, 0, 0, 0.22);
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        border-radius: 5px;
-        cursor: pointer;
-        width: 24px;
-        height: 22px;
-        font-size: 12px;
-        line-height: 1;
-        transition: background 0.15s, border-color 0.15s;
-        flex-shrink: 0;
-    }
-
-    .btnLock:hover {
-        background: rgba(0, 0, 0, 0.38);
-        border-color: rgba(255, 255, 255, 0.35);
-    }
-
-    .mFlexBox.locked .ico-lock {
-        color: #fbbf24;
-        display: inline-block;
-    }
-
-    .mFlexBox.locked .ico-unlock {
-        display: none;
-    }
-
-    .mFlexBox:not(.locked) .ico-lock {
-        display: none;
-    }
-
-    .mFlexBox:not(.locked) .ico-unlock {
-        color: rgba(255, 255, 255, 0.85);
-        display: inline-block;
-    }
-
-    .mFlexBox.locked .processItem {
-        pointer-events: none;
-        opacity: 0.78;
-    }
-
-    .mFlexBox.locked .boxList {
-        cursor: not-allowed;
-    }
-
-    ul.mUl {
-        list-style: none;
-        display: flex;
-        justify-content: space-around;
-        margin: 0px;
-        padding: 0px;
-    }
-
-    ul.mUl > li {
-        list-style-type: none;
-        font-size: small;
-    }
-
-    ul.mUl > li:before {
-        margin-right: 0.5em;
-        width: 0.7em;
-        height: 0.7em;
-        display: inline-block;
-        vertical-align: middle;
-        border-radius: 50%;
-        background-color: orange;
-        content: ' ';
-    }
-
-    .boxList {
-        overflow-y: auto;
-        position: relative;
-        background-color: #eef1f6;
-    }
-
-    .timeSlotRow {
-        display: flex;
-        align-items: stretch;
-        min-height: 56px;
-        border-bottom: 1px solid #e2e8f2;
-        cursor: pointer;
-        background-color: #f7f9fc;
-    }
-
-    .timeSlotRow:hover {
-        background-color: #edf3ff;
-    }
-
-    .timeSlotHour {
-        border-bottom: 2px solid #b8c8dc;
-    }
-
-    .timeLabel {
-        width: 36px;
-        flex-shrink: 0;
-        font-size: 11px;
-        font-weight: 600;
-        color: #8fa8c4;
-        text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-        line-height: 1;
-    }
-
-    .timeContent {
-        flex: 1;
-        min-height: 56px;
-        border-left: 1px solid #e2e8f2;
-        padding: 1px 2px;
-    }
-
-    .timeContent.drop-hover {
-        background-color: #ecfdf5;
-        border-left-color: #22c55e;
-    }
-
-    .processItem {
-        position: absolute;
-        left: 36px;
-        right: 0;
-        background: #ffffff;
-        z-index: 10;
-        overflow: hidden;
-        box-sizing: border-box;
-        border-left: 3px solid #1d6af5;
-        border-radius: 4px;
-        font-size: 11px;
-        display: flex;
-        align-items: center;
-        color: #1e293b;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-    }
-
-    .processItem:hover {
-        background: #f0f6ff;
-        box-shadow: 0 2px 8px rgba(29, 106, 245, 0.15);
-    }
-
-    .resizeHandleTop,
-    .resizeHandleBottom {
-        position: absolute;
-        left: 0;
-        right: 0;
-        height: 6px;
-        cursor: ns-resize;
-        z-index: 2;
-        background: transparent;
-    }
-
-    .resizeHandleTop {
-        top: 0;
-    }
-
-    .resizeHandleBottom {
-        bottom: 0;
-    }
-
-    .processItem.resizing {
-        background: #e8f0fe;
-        box-shadow: 0 2px 12px rgba(29, 106, 245, 0.25);
-    }
-</style>
+<style><?php include __DIR__ . '/planiranje_procesa.css'; ?></style>
 
 <div class="mSideBar" style="">
     <div id="sideBarClose" class="btn btn-xs btn-default btn-mini pull-right" style="margin-right:4px;">X</div>
@@ -449,9 +242,22 @@
             accept: ".processItem",
             hoverClass: "drop-hover",
             drop: function (event, ui) {
-                var item = ui.draggable.detach();
-                item.css({ top: '', left: '', position: '' });
-                $(this).append(item);
+                var $item = ui.draggable;
+                var list = $(this).closest('.boxList')[0];
+                var slotRow = $(this).closest('.timeSlotRow')[0];
+                var newTop = slotRow.offsetTop;
+                var currentH = $item[0].offsetHeight || 28;
+
+                $item.detach().appendTo(list).css({
+                    position: 'absolute',
+                    top: newTop + 'px',
+                    left: '36px',
+                    right: '0',
+                    width: '',
+                    height: currentH + 'px'
+                });
+
+                updateItemTimes($item[0], buildSlotMap(list));
             }
         });
     }
@@ -481,8 +287,8 @@
     var _resizeTopHandler = null;
 
     function initResize() {
-        var slotH = 20;
-        var slotVH = 56;
+        var slotH = 28;
+        var slotVH = 28;
 
         if (!document.getElementById('ppSchedulerStyle')) {
             var styleEl = document.createElement('style');
@@ -503,8 +309,7 @@
                     return;
                 }
 
-                var naturalH = item.offsetHeight;
-                var h = Math.max(slotVH, Math.ceil(naturalH / slotH) * slotH);
+                var h = slotVH;
 
                 item.style.position = 'absolute';
                 item.style.top = cursor + 'px';
