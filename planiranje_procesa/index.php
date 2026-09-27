@@ -105,8 +105,10 @@
     </form>
 </div>
 
-<div class="mContentBody">
-
+<div id="planningRow" style="display:flex; flex-direction:row; overflow:hidden;">
+    <? include __DIR__ . '/neporedjene_stavke.php'; ?>
+    <div class="mContentBody" style="flex:1; min-width:0; overflow:hidden;">
+    </div>
 </div>
 
 <script>
@@ -167,6 +169,16 @@
         btn.classList.toggle('btn-default', !locked);
         btn.querySelector('.glyphicon').className = 'glyphicon glyphicon-' + (locked ? 'lock' : 'pencil');
         btn.title = locked ? 'Otključaj sve' : 'Zaključaj sve';
+
+        var panel = document.querySelector('.neporedenePanel');
+        if (panel) {
+            panel.classList.toggle('locked', locked);
+            $(panel).find('.neporedenaStavka').each(function () {
+                if ($(this).data('ui-draggable')) {
+                    $(this).draggable(locked ? 'disable' : 'enable');
+                }
+            });
+        }
     }
 
     loader();
@@ -255,6 +267,11 @@
         if (contentBody && sidebar) {
             sidebar.style.height = (window.innerHeight - contentBody.getBoundingClientRect().top - 20 + 80) + 'px';
         }
+
+        var panel = document.querySelector('.neporedenePanel');
+        if (contentBody && panel) {
+            panel.style.height = (window.innerHeight - contentBody.getBoundingClientRect().top - 20) + 'px';
+        }
     }
 
     function initDragDrop() {
@@ -267,26 +284,76 @@
             opacity: 0.75
         });
 
+        $(".neporedenaStavka").draggable({
+            helper: "clone",
+            revert: "invalid",
+            appendTo: "body",
+            zIndex: 1000,
+            scroll: false,
+            opacity: 0.75,
+            cursor: "grabbing"
+        });
+
         $(".timeContent").droppable({
-            accept: ".processItem",
+            accept: ".processItem, .neporedenaStavka",
             hoverClass: "drop-hover",
             drop: function (event, ui) {
                 var $item = ui.draggable;
                 var list = $(this).closest('.boxList')[0];
                 var slotRow = $(this).closest('.timeSlotRow')[0];
                 var newTop = slotRow.offsetTop;
-                var currentH = $item[0].offsetHeight || 28;
+                var slotH = 28;
 
-                $item.detach().appendTo(list).css({
-                    position: 'absolute',
-                    top: newTop + 'px',
-                    left: '36px',
-                    right: '0',
-                    width: '',
-                    height: currentH + 'px'
-                });
+                if ($item.hasClass('neporedenaStavka')) {
+                    var id = $item.data('id');
+                    var naziv = $item.find('.stavkaNaziv').text().trim();
+                    var boja = $item.find('.stavkaLevaBoja')[0].style.backgroundColor;
+                    var minVal = parseInt($item.find('.stavkaTrajanje').text().replace(/\D/g, ''), 10) || 60;
+                    var h = Math.max(slotH, Math.round(minVal / 15) * slotH);
 
-                updateItemTimes($item[0], buildSlotMap(list));
+                    var $novi = $('<div class="processItem"></div>').css({
+                        position: 'absolute',
+                        top: newTop + 'px',
+                        left: '36px',
+                        right: '0',
+                        height: h + 'px',
+                        borderLeftColor: boja
+                    });
+                    $novi.html(
+                        '<div style="display:flex;align-items:center;width:100%;padding:3px 6px;box-sizing:border-box;gap:4px;min-width:0;overflow:hidden;">' +
+                        '<div style="flex:1;min-width:0;cursor:pointer;" class="btnArtikalInfo" data-row="' + id + '">' +
+                        '<div style="font-weight:600;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + naziv + '</div>' +
+                        '</div></div>'
+                    );
+                    $(list).append($novi);
+                    $novi[0].insertAdjacentHTML('afterbegin', '<div class="resizeHandleTop"></div>');
+                    $novi[0].insertAdjacentHTML('beforeend', '<div class="resizeHandleBottom"></div>');
+                    $novi[0].dataset.resizeInit = '1';
+                    updateItemTimes($novi[0], buildSlotMap(list));
+                    $novi.draggable({
+                        cancel: ".resizeHandleTop, .resizeHandleBottom",
+                        helper: "clone",
+                        revert: "invalid",
+                        zIndex: 1000,
+                        scroll: false,
+                        opacity: 0.75
+                    });
+
+                    $item.remove();
+                    var cnt = document.querySelector('#neporedeneCount');
+                    if (cnt) cnt.textContent = Math.max(0, parseInt(cnt.textContent, 10) - 1);
+                } else {
+                    var currentH = $item[0].offsetHeight || slotH;
+                    $item.detach().appendTo(list).css({
+                        position: 'absolute',
+                        top: newTop + 'px',
+                        left: '36px',
+                        right: '0',
+                        width: '',
+                        height: currentH + 'px'
+                    });
+                    updateItemTimes($item[0], buildSlotMap(list));
+                }
             }
         });
     }

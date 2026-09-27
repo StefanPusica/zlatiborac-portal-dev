@@ -1,3 +1,237 @@
+/* ── Nepoređene stavke panel ─────────────────────────────── */
+
+.neporedenePanel.locked .neporedenaStavka {
+    pointer-events: none;
+    opacity: 0.78;
+    cursor: default;
+}
+
+.neporedenePanel {
+    width: 320px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    background: #fff;
+    border-right: 1px solid #e2e8f2;
+    box-sizing: border-box;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.08);
+}
+
+.neporedeneHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px 8px;
+    border-bottom: 1px solid #e2e8f2;
+    flex-shrink: 0;
+}
+
+.neporedeneHeaderLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.neporedeneIkona {
+    width: 32px;
+    height: 32px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #475569;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.neporedeneNaslov {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.2;
+}
+
+.neporedeneOpis {
+    font-size: 10px;
+    color: #94a3b8;
+    margin-top: 1px;
+}
+
+.neporedenePretraga {
+    padding: 8px 10px 6px;
+    flex-shrink: 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.neporedeneTabovi {
+    display: flex;
+    gap: 4px;
+    padding: 6px 10px;
+    flex-shrink: 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.neporedeneTab {
+    flex: 1;
+    padding: 3px 0;
+    font-size: 10px;
+    font-weight: 600;
+    border: 1px solid #e2e8f2;
+    border-radius: 12px;
+    background: #fff;
+    color: #64748b;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+
+.neporedeneTab:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.neporedeneTab.active {
+    background: #1e293b;
+    color: #fff;
+    border-color: #1e293b;
+}
+
+.neporedeneInfo {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 12px;
+    font-size: 10px;
+    color: #94a3b8;
+    flex-shrink: 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.neporedeneListа {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.neporedenaStavka {
+    display: flex;
+    align-items: stretch;
+    background: #fff;
+    border: 1px solid #e9eef5;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    cursor: grab;
+    transition: box-shadow 0.15s;
+}
+
+.neporedenaStavka:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-color: #cbd5e1;
+}
+
+.stavkaLevaBoja {
+    width: 4px;
+    flex-shrink: 0;
+}
+
+.stavkaSadrzaj {
+    flex: 1;
+    padding: 7px 8px;
+    min-width: 0;
+}
+
+.stavkaGornji {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 3px;
+}
+
+.stavkaBroj {
+    font-size: 10px;
+    font-weight: 700;
+    color: #475569;
+}
+
+.stavkaWarn {
+    font-size: 10px;
+    color: #ef4444;
+}
+
+.stavkaStatus {
+    margin-left: auto;
+    font-size: 9px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+
+.stavkaStatus.nacrt    { background: #f1f5f9; color: #64748b; }
+.stavkaStatus.odobreno { background: #dcfce7; color: #16a34a; }
+.stavkaStatus.spremno  { background: #dbeafe; color: #2563eb; }
+
+.stavkaNaziv {
+    font-size: 11px;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+}
+
+.stavkaDonjiRed {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.stavkaKat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: #64748b;
+}
+
+.stavkaKatDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.stavkaTrajanje {
+    font-size: 10px;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+.stavkaDrag {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    font-size: 16px;
+    color: #cbd5e1;
+    flex-shrink: 0;
+    cursor: grab;
+    letter-spacing: -1px;
+}
+
+.neporedenaStavka:active {
+    cursor: grabbing;
+}
+
+/* ── End nepoređene stavke ───────────────────────────────── */
+
 .mFlexBox {
     min-width: 320px;
     max-width: 320px;
@@ -92,7 +326,7 @@ ul.mUl > li:before {
 }
 
 .timeSlotHour {
-    border-bottom: 2px solid #b8c8dc;
+    border-top: 2px solid #b8c8dc;
 }
 
 .timeLabel {
