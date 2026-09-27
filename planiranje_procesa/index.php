@@ -220,6 +220,13 @@
             initDragDrop();
             initResize();
             setGlobalLock(true);
+            document.querySelectorAll('.boxList').forEach(function (list) {
+                var slot = Array.from(list.querySelectorAll('.timeSlotRow')).find(function (row) {
+                    var label = row.querySelector('.timeLabel');
+                    return label && label.textContent === '06:00';
+                });
+                if (slot) list.scrollTop = slot.offsetTop;
+            });
             b.style.display = 'none';
         });
     }
