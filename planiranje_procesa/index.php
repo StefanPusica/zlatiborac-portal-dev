@@ -337,6 +337,7 @@
                     $novi[0].insertAdjacentHTML('beforeend', '<div class="resizeHandleBottom"></div>');
                     $novi[0].dataset.resizeInit = '1';
                     updateItemTimes($novi[0], buildSlotMap(list));
+                    pushDisplacedItems(list, $novi[0], newTop, h);
                     $novi.draggable({
                         cancel: ".resizeHandleTop, .resizeHandleBottom",
                         helper: "clone",
@@ -360,6 +361,7 @@
                         height: currentH + 'px'
                     });
                     updateItemTimes($item[0], buildSlotMap(list));
+                    pushDisplacedItems(list, $item[0], newTop, currentH);
                 }
             }
         });
@@ -384,6 +386,50 @@
         var top = parseInt(item.style.top, 10);
         item.setAttribute('data-start-time', pxToTimestamp(top, map));
         item.setAttribute('data-end-time', pxToTimestamp(top + item.offsetHeight, map));
+    }
+
+    function pushDisplacedItems(list, droppedItem, newTop, newH) {
+        var slotH = 28;
+        var dropBottom = newTop + newH;
+
+        var itemsBelow = [];
+        var itemsAbove = [];
+
+        Array.from(list.querySelectorAll('.processItem')).forEach(function (other) {
+            if (other === droppedItem) return;
+            var t = parseInt(other.style.top, 10);
+            if (t >= newTop) {
+                itemsBelow.push({ el: other, origTop: t });
+            } else {
+                itemsAbove.push({ el: other, origTop: t });
+            }
+        });
+
+        itemsBelow.sort(function (a, b) { return a.origTop - b.origTop; });
+        itemsAbove.sort(function (a, b) { return b.origTop - a.origTop; });
+
+        var boundary = dropBottom;
+        itemsBelow.forEach(function (o) {
+            if (o.origTop < boundary) {
+                var pushed = Math.ceil(boundary / slotH) * slotH;
+                o.el.style.top = pushed + 'px';
+                boundary = pushed + o.el.offsetHeight;
+            }
+        });
+
+        boundary = newTop;
+        itemsAbove.forEach(function (o) {
+            var h = o.el.offsetHeight;
+            if (o.origTop + h > boundary) {
+                var pushed = Math.max(Math.floor((boundary - h) / slotH) * slotH, 0);
+                o.el.style.top = pushed + 'px';
+                boundary = pushed;
+            }
+        });
+
+        var map = buildSlotMap(list);
+        itemsBelow.forEach(function (o) { updateItemTimes(o.el, map); });
+        itemsAbove.forEach(function (o) { updateItemTimes(o.el, map); });
     }
 
     var _resizeBottomHandler = null;
@@ -445,27 +491,41 @@
             var startH = item.offsetHeight;
             var startTop = parseInt(item.style.top, 10);
 
-            var maxBottom = list.scrollHeight;
+            var itemsBelow = [];
             Array.from(list.querySelectorAll('.processItem')).forEach(function (other) {
                 if (other === item) return;
                 var t = parseInt(other.style.top, 10);
-                if (t > startTop) maxBottom = Math.min(maxBottom, t);
+                if (t >= startTop) itemsBelow.push({ el: other, origTop: t });
             });
-            var limit = maxBottom - startTop;
+            itemsBelow.sort(function (a, b) { return a.origTop - b.origTop; });
 
             item.classList.add('resizing');
 
             function onMoveBottom(e) {
                 var dy = e.pageY - startY;
                 var newH = Math.round(Math.max(slotH, startH + dy) / slotH) * slotH;
-                item.style.height = Math.min(newH, limit) + 'px';
+                newH = Math.min(newH, list.scrollHeight - startTop);
+                item.style.height = newH + 'px';
+
+                var boundary = startTop + newH;
+                itemsBelow.forEach(function (o) {
+                    if (o.origTop < boundary) {
+                        var pushed = Math.ceil(boundary / slotH) * slotH;
+                        o.el.style.top = pushed + 'px';
+                        boundary = pushed + o.el.offsetHeight;
+                    } else {
+                        o.el.style.top = o.origTop + 'px';
+                    }
+                });
             }
 
             function onUpBottom() {
                 document.removeEventListener('mousemove', onMoveBottom);
                 document.removeEventListener('mouseup', onUpBottom);
                 item.classList.remove('resizing');
-                updateItemTimes(item, buildSlotMap(list));
+                var map = buildSlotMap(list);
+                updateItemTimes(item, map);
+                itemsBelow.forEach(function (o) { updateItemTimes(o.el, map); });
             }
 
             document.addEventListener('mousemove', onMoveBottom);
@@ -485,12 +545,13 @@
             var startH = item.offsetHeight;
             var bottom = startTop + startH;
 
-            var minTop = 0;
+            var itemsAbove = [];
             Array.from(list.querySelectorAll('.processItem')).forEach(function (other) {
                 if (other === item) return;
                 var t = parseInt(other.style.top, 10);
-                if (t < startTop) minTop = Math.max(minTop, t + other.offsetHeight);
+                if (t < startTop) itemsAbove.push({ el: other, origTop: t });
             });
+            itemsAbove.sort(function (a, b) { return b.origTop - a.origTop; });
 
             item.classList.add('resizing');
 
@@ -499,22 +560,31 @@
                 var rawH = bottom - (startTop + dy);
                 var newH = Math.round(Math.max(slotH, rawH) / slotH) * slotH;
                 var newTop = bottom - newH;
-
-                if (newTop < minTop) {
-                    newH = Math.floor((bottom - minTop) / slotH) * slotH;
-                    if (newH < slotH) newH = slotH;
-                    newTop = bottom - newH;
-                }
+                if (newTop < 0) { newTop = 0; newH = bottom; }
 
                 item.style.top = newTop + 'px';
                 item.style.height = newH + 'px';
+
+                var boundary = newTop;
+                itemsAbove.forEach(function (o) {
+                    var itemH = o.el.offsetHeight;
+                    if (o.origTop + itemH > boundary) {
+                        var pushed = Math.max(Math.floor((boundary - itemH) / slotH) * slotH, 0);
+                        o.el.style.top = pushed + 'px';
+                        boundary = pushed;
+                    } else {
+                        o.el.style.top = o.origTop + 'px';
+                    }
+                });
             }
 
             function onUpTop() {
                 document.removeEventListener('mousemove', onMoveTop);
                 document.removeEventListener('mouseup', onUpTop);
                 item.classList.remove('resizing');
-                updateItemTimes(item, buildSlotMap(list));
+                var map = buildSlotMap(list);
+                updateItemTimes(item, map);
+                itemsAbove.forEach(function (o) { updateItemTimes(o.el, map); });
             }
 
             document.addEventListener('mousemove', onMoveTop);
