@@ -288,7 +288,9 @@
             revert: "invalid",
             zIndex: 1000,
             scroll: false,
-            opacity: 0.75
+            opacity: 0.9,
+            start: function () { $(this).addClass('dragging'); },
+            stop: function () { $(this).removeClass('dragging'); }
         });
 
         $(".neporedenaStavka").draggable({

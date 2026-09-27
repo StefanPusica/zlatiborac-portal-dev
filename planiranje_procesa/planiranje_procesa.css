@@ -386,6 +386,7 @@ ul.mUl > li:before {
     cursor: ns-resize;
     z-index: 2;
     background: transparent;
+    transition: background 0.1s;
 }
 
 .resizeHandleTop {
@@ -396,7 +397,23 @@ ul.mUl > li:before {
     bottom: 0;
 }
 
+.resizeHandleTop:hover,
+.resizeHandleBottom:hover {
+    background: rgba(29, 106, 245, 0.25);
+}
+
 .processItem.resizing {
-    background: #e8f0fe;
-    box-shadow: 0 2px 12px rgba(29, 106, 245, 0.25);
+    background: #dbeafe;
+    border-left-color: #f59e0b;
+    border-top: 1px solid #f59e0b;
+    border-right: 1px solid #f59e0b;
+    border-bottom: 1px solid #f59e0b;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35), 0 4px 16px rgba(29, 106, 245, 0.2);
+    z-index: 20;
+}
+
+.processItem.dragging {
+    opacity: 0.35;
+    border-left-style: dashed;
+    background: #f8fafc;
 }
