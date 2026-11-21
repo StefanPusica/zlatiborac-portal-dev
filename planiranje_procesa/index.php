@@ -629,9 +629,6 @@
 
             var item = handle.closest('.processItem');
             var list = item.closest('.boxList');
-            var currentFlexBox = item.closest('.mFlexBox');
-            var nextFlexBox = currentFlexBox ? currentFlexBox.nextElementSibling : null;
-            var nextList = nextFlexBox ? nextFlexBox.querySelector('.boxList') : null;
 
             var startY = e.pageY;
             var startH = item.offsetHeight;
@@ -641,14 +638,6 @@
             var lastSlot = allSlots[allSlots.length - 1];
             var listMax = lastSlot ? lastSlot.offsetTop + slotH : list.scrollHeight;
             var maxH = listMax - startTop;
-
-            // Ako original već ima linked continuation u nextList, pronađi ga
-            var nextLinkedItem = null;
-            var origNextH = 0;
-            if (item.dataset.splitGroup && nextList) {
-                nextLinkedItem = nextList.querySelector('[data-split-group="' + item.dataset.splitGroup + '"][data-is-continuation]');
-                if (nextLinkedItem) origNextH = nextLinkedItem.offsetHeight;
-            }
 
             var itemsBelow = [];
             Array.from(list.querySelectorAll('.processItem')).forEach(function (other) {
@@ -660,73 +649,22 @@
 
             item.classList.add('resizing');
 
-            var contItem = null;
-            var didScroll = false;
-
             function onMoveBottom(e) {
                 var dy = e.pageY - startY;
                 var rawH = Math.round(Math.max(slotH, startH + dy) / slotH) * slotH;
+                var newH = Math.min(rawH, maxH);
+                item.style.height = newH + 'px';
 
-                if (nextList && rawH > maxH) {
-                    var clippedH = Math.ceil(maxH / slotH) * slotH;
-                    item.style.height = clippedH + 'px';
-
-                    var overflow = rawH - clippedH;
-                    var overflowSnapped = Math.max(slotH, Math.round(overflow / slotH) * slotH);
-
-                    if (nextLinkedItem) {
-                        // Proširi postojeći continuation item naniže — ne kreira novi klon
-                        nextLinkedItem.style.height = (origNextH + overflowSnapped) + 'px';
+                var boundary = startTop + newH;
+                itemsBelow.forEach(function (o) {
+                    if (o.origTop < boundary) {
+                        var pushed = Math.ceil(boundary / slotH) * slotH;
+                        o.el.style.top = pushed + 'px';
+                        boundary = pushed + o.el.offsetHeight;
                     } else {
-                        if (!contItem) {
-                            contItem = item.cloneNode(true);
-                            contItem.querySelectorAll('.resizeHandleTop, .resizeHandleBottom').forEach(function (rh) { rh.remove(); });
-                            contItem.classList.remove('resizing');
-                            contItem.classList.add('processContinuation');
-                            contItem.dataset.resizeInit = '';
-                            contItem.style.top = '0px';
-                            contItem.style.height = overflowSnapped + 'px';
-                            nextList.appendChild(contItem);
-
-                            if (!didScroll) {
-                                didScroll = true;
-                                var flexContent = document.querySelector('.mFlexContent');
-                                if (flexContent) {
-                                    var boxLeft = nextFlexBox.getBoundingClientRect().left
-                                        - flexContent.getBoundingClientRect().left
-                                        + flexContent.scrollLeft;
-                                    flexContent.scrollTo({ left: boxLeft, behavior: 'smooth' });
-                                }
-                                nextList.scrollTop = 0;
-                            }
-                        } else {
-                            contItem.style.height = overflowSnapped + 'px';
-                        }
+                        o.el.style.top = o.origTop + 'px';
                     }
-                } else {
-                    if (nextLinkedItem) {
-                        // Vrati continuation item na originalnu visinu
-                        nextLinkedItem.style.height = origNextH + 'px';
-                    }
-                    if (contItem) {
-                        contItem.remove();
-                        contItem = null;
-                        didScroll = false;
-                    }
-                    var newH = Math.min(rawH, maxH);
-                    item.style.height = newH + 'px';
-
-                    var boundary = startTop + newH;
-                    itemsBelow.forEach(function (o) {
-                        if (o.origTop < boundary) {
-                            var pushed = Math.ceil(boundary / slotH) * slotH;
-                            o.el.style.top = pushed + 'px';
-                            boundary = pushed + o.el.offsetHeight;
-                        } else {
-                            o.el.style.top = o.origTop + 'px';
-                        }
-                    });
-                }
+                });
             }
 
             function onUpBottom() {
@@ -736,32 +674,6 @@
                 var map = buildSlotMap(list);
                 updateItemTimes(item, map);
                 itemsBelow.forEach(function (o) { updateItemTimes(o.el, map); });
-
-                if (nextLinkedItem || contItem) {
-                    var nextMap = buildSlotMap(nextList);
-                    if (nextLinkedItem) updateItemTimes(nextLinkedItem, nextMap);
-                    if (contItem) {
-                        contItem.classList.remove('processContinuation');
-                        contItem.insertAdjacentHTML('afterbegin', '<div class="resizeHandleTop"></div>');
-                        contItem.insertAdjacentHTML('beforeend', '<div class="resizeHandleBottom"></div>');
-                        contItem.dataset.resizeInit = '1';
-                        var splitGroupId = 'sg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-                        item.dataset.splitGroup = splitGroupId;
-                        contItem.dataset.splitGroup = splitGroupId;
-                        contItem.dataset.isContinuation = '1';
-                        updateItemTimes(contItem, nextMap);
-                        $(contItem).draggable({
-                            cancel: ".resizeHandleTop, .resizeHandleBottom",
-                            helper: "clone",
-                            revert: "invalid",
-                            zIndex: 1000,
-                            scroll: false,
-                            opacity: 0.9,
-                            start: function () { $(this).addClass('dragging'); },
-                            stop: function () { $(this).removeClass('dragging'); }
-                        });
-                    }
-                }
             }
 
             document.addEventListener('mousemove', onMoveBottom);
@@ -776,33 +688,11 @@
 
             var item = handle.closest('.processItem');
             var list = item.closest('.boxList');
-            var currentFlexBox = item.closest('.mFlexBox');
-            var prevFlexBox = currentFlexBox ? currentFlexBox.previousElementSibling : null;
-            var prevList = prevFlexBox ? prevFlexBox.querySelector('.boxList') : null;
 
             var startY = e.pageY;
             var startTop = parseInt(item.style.top, 10);
             var startH = item.offsetHeight;
             var bottom = startTop + startH;
-
-            var prevLastSlotBottom = 0;
-            if (prevList) {
-                var prevSlots = prevList.querySelectorAll('.timeSlotRow');
-                var prevLastSlot = prevSlots[prevSlots.length - 1];
-                if (prevLastSlot) prevLastSlotBottom = prevLastSlot.offsetTop + slotH;
-            }
-
-            // Ako je ovaj item continuation split-a, pronađi linked original u prevList
-            var prevLinkedItem = null;
-            var origPrevTop = 0;
-            var origPrevH = 0;
-            if (item.dataset.isContinuation && item.dataset.splitGroup && prevList) {
-                prevLinkedItem = prevList.querySelector('[data-split-group="' + item.dataset.splitGroup + '"]:not([data-is-continuation])');
-                if (prevLinkedItem) {
-                    origPrevTop = parseInt(prevLinkedItem.style.top, 10);
-                    origPrevH = prevLinkedItem.offsetHeight;
-                }
-            }
 
             var itemsAbove = [];
             Array.from(list.querySelectorAll('.processItem')).forEach(function (other) {
@@ -814,85 +704,27 @@
 
             item.classList.add('resizing');
 
-            var contItem = null;
-            var didScroll = false;
-
             function onMoveTop(e) {
                 var dy = e.pageY - startY;
                 var rawH = bottom - (startTop + dy);
                 var newH = Math.round(Math.max(slotH, rawH) / slotH) * slotH;
                 var newTop = bottom - newH;
 
-                if (newTop < 0) {
-                    var clippedH = Math.ceil(bottom / slotH) * slotH;
-                    item.style.top = '0px';
-                    item.style.height = clippedH + 'px';
+                if (newTop < 0) { newTop = 0; newH = bottom; }
+                item.style.top = newTop + 'px';
+                item.style.height = newH + 'px';
 
-                    var overflow = newH - clippedH;
-                    var overflowSnapped = Math.max(slotH, Math.round(overflow / slotH) * slotH);
-
-                    if (prevLinkedItem) {
-                        // Proširi postojeći linked item naviše — ne kreira novi klon
-                        var newPrevTop = Math.max(0, origPrevTop - overflowSnapped);
-                        var newPrevH = origPrevTop + origPrevH - newPrevTop;
-                        prevLinkedItem.style.top = newPrevTop + 'px';
-                        prevLinkedItem.style.height = newPrevH + 'px';
-                    } else if (prevList) {
-                        var contTop = Math.max(0, prevLastSlotBottom - overflowSnapped);
-
-                        if (!contItem) {
-                            contItem = item.cloneNode(true);
-                            contItem.querySelectorAll('.resizeHandleTop, .resizeHandleBottom').forEach(function (rh) { rh.remove(); });
-                            contItem.classList.remove('resizing');
-                            contItem.classList.add('processContinuation');
-                            contItem.dataset.resizeInit = '';
-                            contItem.style.top = contTop + 'px';
-                            contItem.style.height = overflowSnapped + 'px';
-                            prevList.appendChild(contItem);
-
-                            if (!didScroll) {
-                                didScroll = true;
-                                var flexContent = document.querySelector('.mFlexContent');
-                                if (flexContent) {
-                                    var boxLeft = prevFlexBox.getBoundingClientRect().left
-                                        - flexContent.getBoundingClientRect().left
-                                        + flexContent.scrollLeft;
-                                    flexContent.scrollTo({ left: boxLeft, behavior: 'smooth' });
-                                }
-                                prevList.scrollTop = prevList.scrollHeight;
-                            }
-                        } else {
-                            contItem.style.top = contTop + 'px';
-                            contItem.style.height = overflowSnapped + 'px';
-                        }
+                var boundary = newTop;
+                itemsAbove.forEach(function (o) {
+                    var itemH = o.el.offsetHeight;
+                    if (o.origTop + itemH > boundary) {
+                        var pushed = Math.max(Math.floor((boundary - itemH) / slotH) * slotH, 0);
+                        o.el.style.top = pushed + 'px';
+                        boundary = pushed;
+                    } else {
+                        o.el.style.top = o.origTop + 'px';
                     }
-                } else {
-                    // Nema overflow — vrati linked item na original poziciju ili ukloni privremeni klon
-                    if (prevLinkedItem) {
-                        prevLinkedItem.style.top = origPrevTop + 'px';
-                        prevLinkedItem.style.height = origPrevH + 'px';
-                    }
-                    if (contItem) {
-                        contItem.remove();
-                        contItem = null;
-                        didScroll = false;
-                    }
-                    if (newTop < 0) { newTop = 0; newH = bottom; }
-                    item.style.top = newTop + 'px';
-                    item.style.height = newH + 'px';
-
-                    var boundary = newTop;
-                    itemsAbove.forEach(function (o) {
-                        var itemH = o.el.offsetHeight;
-                        if (o.origTop + itemH > boundary) {
-                            var pushed = Math.max(Math.floor((boundary - itemH) / slotH) * slotH, 0);
-                            o.el.style.top = pushed + 'px';
-                            boundary = pushed;
-                        } else {
-                            o.el.style.top = o.origTop + 'px';
-                        }
-                    });
-                }
+                });
             }
 
             function onUpTop() {
@@ -902,28 +734,6 @@
                 var map = buildSlotMap(list);
                 updateItemTimes(item, map);
                 itemsAbove.forEach(function (o) { updateItemTimes(o.el, map); });
-
-                if (prevLinkedItem || contItem) {
-                    var prevMap = buildSlotMap(prevList);
-                    if (prevLinkedItem) updateItemTimes(prevLinkedItem, prevMap);
-                    if (contItem) {
-                        contItem.classList.remove('processContinuation');
-                        contItem.insertAdjacentHTML('afterbegin', '<div class="resizeHandleTop"></div>');
-                        contItem.insertAdjacentHTML('beforeend', '<div class="resizeHandleBottom"></div>');
-                        contItem.dataset.resizeInit = '1';
-                        updateItemTimes(contItem, prevMap);
-                        $(contItem).draggable({
-                            cancel: ".resizeHandleTop, .resizeHandleBottom",
-                            helper: "clone",
-                            revert: "invalid",
-                            zIndex: 1000,
-                            scroll: false,
-                            opacity: 0.9,
-                            start: function () { $(this).addClass('dragging'); },
-                            stop: function () { $(this).removeClass('dragging'); }
-                        });
-                    }
-                }
             }
 
             document.addEventListener('mousemove', onMoveTop);
