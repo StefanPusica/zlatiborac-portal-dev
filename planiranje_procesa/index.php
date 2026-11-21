@@ -41,11 +41,32 @@
                 <div class="col-sm-12">Period</div>
             </div>
             <div class="row">
-                <div class="col-sm-6">
-                    <input type="text" name="start" class="form-control input-sm text-center" id="start" placeholder="Početak" value="<?= $start; ?>" readonly="readonly">
-                </div>
-                <div class="col-sm-6">
-                    <input type="text" name="kraj" class="form-control input-sm text-center" id="kraj" placeholder="Završetak" value="<?= $kraj; ?>" readonly="readonly">
+                <div class="col-sm-12">
+                    <input type="hidden" name="start" id="start" value="<?= $start; ?>">
+                    <input type="hidden" name="kraj" id="kraj" value="<?= $kraj; ?>">
+                    <div class="weekPickerWrap" id="weekPickerWrap">
+                        <div class="weekPicker" id="weekPicker" tabindex="0" title="Strelice levo/desno menjaju nedelju, Enter otvara listu">
+                            <button type="button" class="weekPickerBtn" id="weekPrev" title="Prethodna nedelja" aria-label="Prethodna nedelja">&lsaquo;</button>
+                            <div class="weekPickerPeriod" id="weekPeriod" aria-live="polite" title="Izbor nedelje"></div>
+                            <button type="button" class="weekPickerBtn" id="weekNext" title="Naredna nedelja" aria-label="Naredna nedelja">&rsaquo;</button>
+                        </div>
+                        <div class="weekDropdown" id="weekDropdown" style="display: none;">
+                            <div class="weekDropdownHeader">
+                                <button type="button" class="weekDropdownNav" id="weekMonthPrev" aria-label="Prethodni mesec">&lsaquo;</button>
+                                <span id="weekMonthTitle"></span>
+                                <button type="button" class="weekDropdownNav" id="weekMonthNext" aria-label="Naredni mesec">&rsaquo;</button>
+                            </div>
+                            <div class="weekDropdownRow weekDropdownHead">
+                                <span class="weekDropdownBroj">Nedelja</span>
+                                <span class="weekDropdownPeriod">Period</span>
+                            </div>
+                            <div id="weekDropdownList"></div>
+                        </div>
+                    </div>
+                    <div class="weekPickerInfo">
+                        <span id="weekBroj"></span>
+                        <a href="#" id="weekTrenutna">Trenutna nedelja</a>
+                    </div>
                 </div>
             </div>
 
@@ -125,23 +146,148 @@
         onFind: function (e) { loader(); }
     });
 
-    $('#start').datepicker({
-        changeMonth: true,
-        changeYear: true,
-        "option": $.datepicker.regional['rs'],
-        onClose: function (selectedDate) {
-            $('#kraj').datepicker("option", "minDate", selectedDate);
-        }
-    });
+    (function () {
+        var monday;
 
-    $('#kraj').datepicker({
-        changeMonth: true,
-        changeYear: true,
-        "option": $.datepicker.regional['rs'],
-        onClose: function (selectedDate) {
-            $('#start').datepicker("option", "maxDate", selectedDate);
+        function pad(n) { return String(n).padStart(2, '0'); }
+        function fmt(d) { return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear(); }
+
+        function parse(v) {
+            v = (v || '').trim();
+            var m = v.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\.?$/);
+            if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+            if (/^\d{9,}$/.test(v)) return new Date(parseInt(v, 10) * 1000);
+            return null;
         }
-    });
+
+        function toMonday(d) {
+            var r = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            r.setDate(r.getDate() - (r.getDay() + 6) % 7);
+            return r;
+        }
+
+        // ISO 8601: nedelja kojoj pripada četvrtak
+        function isoWeek(mon) {
+            var thu = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 3);
+            var jan4 = new Date(thu.getFullYear(), 0, 4);
+            return 1 + Math.round((thu - toMonday(jan4)) / 604800000);
+        }
+
+        function render() {
+            var sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+            document.getElementById('start').value = fmt(monday);
+            document.getElementById('kraj').value = fmt(sunday);
+            document.getElementById('weekPeriod').textContent =
+                pad(monday.getDate()) + '.' + pad(monday.getMonth() + 1) + '. – ' + fmt(sunday);
+            document.getElementById('weekBroj').textContent = 'Nedelja ' + isoWeek(monday);
+            document.getElementById('weekTrenutna').style.visibility =
+                monday.getTime() === toMonday(new Date()).getTime() ? 'hidden' : 'visible';
+        }
+
+        function setWeek(d) {
+            monday = toMonday(d);
+            render();
+        }
+
+        function shift(days) {
+            setWeek(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + days));
+            closeDropdown();
+            loader();
+        }
+
+        var meseci = ['Januar', 'Februar', 'Mart', 'April', 'Maj', 'Jun', 'Jul', 'Avgust', 'Septembar', 'Oktobar', 'Novembar', 'Decembar'];
+        var dropdown = document.getElementById('weekDropdown');
+        var viewYear, viewMonth;
+
+        // Prikazuju se nedelje čiji ponedeljak pada u izabrani mesec
+        function renderDropdown() {
+            document.getElementById('weekMonthTitle').textContent = meseci[viewMonth] + ' ' + viewYear;
+            var d = toMonday(new Date(viewYear, viewMonth, 1));
+            if (d.getMonth() !== viewMonth) d.setDate(d.getDate() + 7);
+            var html = '';
+            while (d.getMonth() === viewMonth) {
+                var sun = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 6);
+                var sel = d.getTime() === monday.getTime();
+                html += '<div class="weekDropdownRow weekDropdownItem' + (sel ? ' selected' : '') + '" tabindex="0" data-ts="' + d.getTime() + '">' +
+                    '<span class="weekDropdownBroj">' + isoWeek(d) + '</span>' +
+                    '<span class="weekDropdownPeriod">' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '. – ' + fmt(sun) + '</span>' +
+                    (sel ? '<span class="glyphicon glyphicon-ok"></span>' : '') +
+                    '</div>';
+                d.setDate(d.getDate() + 7);
+            }
+            document.getElementById('weekDropdownList').innerHTML = html;
+        }
+
+        function openDropdown() {
+            viewYear = monday.getFullYear();
+            viewMonth = monday.getMonth();
+            renderDropdown();
+            dropdown.style.display = 'block';
+            var s = dropdown.querySelector('.weekDropdownItem.selected');
+            if (s) s.focus();
+        }
+
+        function closeDropdown(focusPicker) {
+            dropdown.style.display = 'none';
+            if (focusPicker) document.getElementById('weekPicker').focus();
+        }
+
+        function shiftMonth(n) {
+            var d = new Date(viewYear, viewMonth + n, 1);
+            viewYear = d.getFullYear();
+            viewMonth = d.getMonth();
+            renderDropdown();
+        }
+
+        function selectItem(row) {
+            setWeek(new Date(parseInt(row.dataset.ts, 10)));
+            closeDropdown(true);
+            loader();
+        }
+
+        setWeek(parse(document.getElementById('start').value) || new Date());
+
+        document.getElementById('weekPrev').addEventListener('click', function () { shift(-7); });
+        document.getElementById('weekNext').addEventListener('click', function () { shift(7); });
+        document.getElementById('weekPeriod').addEventListener('click', function () {
+            dropdown.style.display === 'none' ? openDropdown() : closeDropdown();
+        });
+        document.getElementById('weekMonthPrev').addEventListener('click', function () { shiftMonth(-1); });
+        document.getElementById('weekMonthNext').addEventListener('click', function () { shiftMonth(1); });
+        document.getElementById('weekTrenutna').addEventListener('click', function (e) {
+            e.preventDefault();
+            setWeek(new Date());
+            closeDropdown();
+            loader();
+        });
+        document.getElementById('weekPicker').addEventListener('keydown', function (e) {
+            if (e.target !== this) return;
+            if (e.key === 'ArrowLeft') { e.preventDefault(); shift(-7); }
+            else if (e.key === 'ArrowRight') { e.preventDefault(); shift(7); }
+            else if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); openDropdown(); }
+        });
+
+        document.getElementById('weekDropdownList').addEventListener('click', function (e) {
+            var row = e.target.closest('.weekDropdownItem');
+            if (row) selectItem(row);
+        });
+
+        dropdown.addEventListener('keydown', function (e) {
+            var row = e.target.closest('.weekDropdownItem');
+            if (e.key === 'Escape') { e.preventDefault(); closeDropdown(true); }
+            else if (row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); selectItem(row); }
+            else if (row && e.key === 'ArrowDown' && row.nextElementSibling) { e.preventDefault(); row.nextElementSibling.focus(); }
+            else if (row && e.key === 'ArrowUp' && row.previousElementSibling) { e.preventDefault(); row.previousElementSibling.focus(); }
+            else if (e.key === 'PageUp') { e.preventDefault(); shiftMonth(-1); }
+            else if (e.key === 'PageDown') { e.preventDefault(); shiftMonth(1); }
+        });
+
+        document.addEventListener('mousedown', function (e) {
+            if (dropdown.style.display !== 'none' && !document.getElementById('weekPickerWrap').contains(e.target)) {
+                closeDropdown();
+            }
+        });
+    })();
 
     document.getElementById('btnSave').addEventListener('click', function () {
         document.querySelectorAll('.processItem').forEach(function (item) {
