@@ -17,10 +17,11 @@
             <?
         }
 
-        for ($h = 0; $h < 24; $h++) {
+        for ($i = 0; $i < 24; $i++) {
+            $h = ($i + 7) % 24;
             for ($m = 0; $m < 60; $m += 15) {
                 $timeStr = sprintf('%02d:%02d', $h, $m);
-                $slotTs = strtotime($date . ' ' . $timeStr . ':00');
+                $slotTs = strtotime($date . ' ' . $timeStr . ':00' . ($h < 7 ? ' +1 day' : ''));
             ?>
                 <div class="timeSlotRow<?= $m === 0 ? ' timeSlotHour' : ''; ?>" data-timestamp="<?= $slotTs; ?>">
                     <div class="timeLabel"><?= $timeStr; ?></div>
