@@ -1,10 +1,10 @@
 <?
 $_demoStavke = [
-    ['id' => 9410, 'naziv' => 'NADEV ZA ČAJNU KOBASICU',   'kat' => 'kobasica', 'boja' => '#f97316', 'min' => 75,  'status' => 'Nacrt',    'statusKlasa' => 'nacrt',    'warn' => false],
-    ['id' => 9421, 'naziv' => 'NADEV ZA DOMAĆU SALAMU',    'kat' => 'salama',   'boja' => '#a855f7', 'min' => 90,  'status' => 'Odobreno', 'statusKlasa' => 'odobreno', 'warn' => true],
-    ['id' => 9433, 'naziv' => 'NADEV ZA SLAVONSKI KULEN',  'kat' => 'kulen',    'boja' => '#7c3aed', 'min' => 45,  'status' => 'Spremno',  'statusKlasa' => 'spremno',  'warn' => false],
-    ['id' => 9460, 'naziv' => 'ZAČINSKA SMJESA – OSTALO',  'kat' => 'ostalo',   'boja' => '#94a3b8', 'min' => 15,  'status' => 'Spremno',  'statusKlasa' => 'spremno',  'warn' => false],
-    ['id' => 9472, 'naziv' => 'NADEV ZA LOVAČKU KOBASICU', 'kat' => 'kobasica', 'boja' => '#f97316', 'min' => 45,  'status' => 'Odobreno', 'statusKlasa' => 'odobreno', 'warn' => false],
+    ['id' => 9410, 'naziv' => 'NADEV ZA ČAJNU KOBASICU',   'kat' => 'kobasica', 'boja' => '#f97316', 'min' => 75,  'status' => 'Nacrt',    'statusKlasa' => 'nacrt',    'dan' => 1, 'warn' => false],
+    ['id' => 9421, 'naziv' => 'NADEV ZA DOMAĆU SALAMU',    'kat' => 'salama',   'boja' => '#a855f7', 'min' => 90,  'status' => 'Odobreno', 'statusKlasa' => 'odobreno', 'dan' => 2, 'warn' => true],
+    ['id' => 9433, 'naziv' => 'NADEV ZA SLAVONSKI KULEN',  'kat' => 'kulen',    'boja' => '#7c3aed', 'min' => 45,  'status' => 'Spremno',  'statusKlasa' => 'spremno',  'dan' => 3, 'warn' => false],
+    ['id' => 9460, 'naziv' => 'ZAČINSKA SMJESA – OSTALO',  'kat' => 'ostalo',   'boja' => '#94a3b8', 'min' => 15,  'status' => 'Spremno',  'statusKlasa' => 'spremno',  'dan' => 5, 'warn' => false],
+    ['id' => 9472, 'naziv' => 'NADEV ZA LOVAČKU KOBASICU', 'kat' => 'kobasica', 'boja' => '#f97316', 'min' => 45,  'status' => 'Odobreno', 'statusKlasa' => 'odobreno', 'dan' => 4, 'warn' => false],
 ];
 $_ukupnoMin = array_sum(array_column($_demoStavke, 'min'));
 ?>
@@ -28,10 +28,6 @@ $_ukupnoMin = array_sum(array_column($_demoStavke, 'min'));
     </div>
 
     <div class="neporedeneTabovi">
-        <button class="neporedeneTab active" data-filter="sve">Sve</button>
-        <button class="neporedeneTab" data-filter="spremno">Spremno</button>
-        <button class="neporedeneTab" data-filter="nacrt">Nacrti</button>
-        <button class="neporedeneTab" data-filter="odobreno">Odobreno</button>
     </div>
 
     <div class="neporedeneInfo">
@@ -44,7 +40,7 @@ $_ukupnoMin = array_sum(array_column($_demoStavke, 'min'));
 
     <div class="neporedeneListа" id="neporedeneListа">
         <? foreach ($_demoStavke as $_s): ?>
-        <div class="neporedenaStavka" data-status="<?= $_s['statusKlasa']; ?>" data-id="<?= $_s['id']; ?>">
+        <div class="neporedenaStavka" data-dan="<?= $_s['dan']; ?>" data-id="<?= $_s['id']; ?>">
             <div class="stavkaLevaBoja" style="background-color:<?= $_s['boja']; ?>;"></div>
             <div class="stavkaSadrzaj">
                 <div class="stavkaGornji">
@@ -77,27 +73,45 @@ $_ukupnoMin = array_sum(array_column($_demoStavke, 'min'));
     var panel = document.querySelector('.neporedenePanel');
     if (!panel) return;
 
+    var daniNazivi = ['Pon', 'Uto', 'Sre', 'Čet', 'Pet', 'Sub', 'Ned'];
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    window.neporedeneSetNedelja = function (monday) {
+        var html = '<button class="neporedeneTab active" data-dan="">Sve</button>';
+        for (var i = 0; i < 7; i++) {
+            var d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+            html += '<button class="neporedeneTab" data-dan="' + (i + 1) + '" data-datum="' +
+                d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '">' +
+                '<span class="neporedeneTabDan">' + daniNazivi[i] + '</span>' +
+                '<span class="neporedeneTabDatum">' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.</span>' +
+                '</button>';
+        }
+        panel.querySelector('.neporedeneTabovi').innerHTML = html;
+        filterStavke(null, panel.querySelector('#neporedenePretraga').value);
+    };
+
     panel.addEventListener('click', function (e) {
         var tab = e.target.closest('.neporedeneTab');
         if (!tab) return;
         panel.querySelectorAll('.neporedeneTab').forEach(function (t) { t.classList.remove('active'); });
         tab.classList.add('active');
-        filterStavke(tab.dataset.filter, panel.querySelector('#neporedenePretraga').value);
+        filterStavke(tab.dataset.dan, panel.querySelector('#neporedenePretraga').value);
     });
 
     panel.querySelector('#neporedenePretraga').addEventListener('input', function () {
-        var activeFilter = (panel.querySelector('.neporedeneTab.active') || {}).dataset.filter || 'sve';
-        filterStavke(activeFilter, this.value);
+        var active = panel.querySelector('.neporedeneTab.active');
+        filterStavke(active ? active.dataset.dan : null, this.value);
     });
 
-    function filterStavke(status, query) {
+    function filterStavke(dan, query) {
         var q = (query || '').toLowerCase();
         var visible = 0;
         panel.querySelectorAll('.neporedenaStavka').forEach(function (el) {
-            var matchStatus = status === 'sve' || el.dataset.status === status;
+            var matchDan = !dan || el.dataset.dan === dan;
             var matchQuery = !q || el.querySelector('.stavkaBroj').textContent.toLowerCase().indexOf(q) !== -1
                               || el.querySelector('.stavkaNaziv').textContent.toLowerCase().indexOf(q) !== -1;
-            var show = matchStatus && matchQuery;
+            var show = matchDan && matchQuery;
             el.style.display = show ? '' : 'none';
             if (show) visible++;
         });

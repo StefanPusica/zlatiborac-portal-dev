@@ -182,6 +182,7 @@
             document.getElementById('weekBroj').textContent = 'Nedelja ' + isoWeek(monday);
             document.getElementById('weekTrenutna').style.visibility =
                 monday.getTime() === toMonday(new Date()).getTime() ? 'hidden' : 'visible';
+            neporedeneSetNedelja(monday);
         }
 
         function setWeek(d) {
