@@ -132,7 +132,119 @@
     </div>
 </div>
 
+<div id="piHost">
+    <div id="piMenu" class="piMenu" style="display:none;">
+        <a href="#" data-akcija="split">
+            <svg class="piMenuIkona" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="6" cy="6" r="3"></circle>
+                <circle cx="6" cy="18" r="3"></circle>
+                <line x1="20" y1="4" x2="8.12" y2="15.88"></line>
+                <line x1="14.47" y1="14.48" x2="20" y2="20"></line>
+                <line x1="8.12" y1="8.12" x2="12" y2="12"></line>
+            </svg>
+            Split
+        </a>
+        <a href="#" data-akcija="merge"><span class="glyphicon glyphicon-resize-small"></span> Merge</a>
+    </div>
+
+    <div class="modal fade" id="piSplitModal" tabindex="-1" role="dialog"></div>
+    <template id="tplPiSplit">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Split stavke</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="piModalNaziv" id="piSplitNaziv"></div>
+                    <div class="piModalInfo">Ukupna količina: <b id="piSplitUkupno"></b></div>
+                    <label for="piSplitKol" style="font-size:12px;">Količina novog splita (kg)</label>
+                    <input type="number" class="form-control input-sm" id="piSplitKol" min="0" step="any">
+                    <div class="piModalInfo">Ostatak: <b id="piSplitOstatak"></b></div>
+                    <div class="piModalInfo" id="piSplitOpis"></div>
+                    <div class="text-danger" id="piSplitGreska" style="font-size:11px;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Odustani</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="piSplitOk"><span class="glyphicon glyphicon-scissors"></span> Split</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <div class="modal fade" id="piMergeModal" tabindex="-1" role="dialog"></div>
+    <template id="tplPiMerge">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Merge stavke</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="piModalNaziv" id="piMergeNaziv"></div>
+                    <div class="piModalInfo">Količina: <b id="piMergeKol"></b></div>
+                    <label for="piMergeSel" style="font-size:12px;">Spoji sa</label>
+                    <select class="form-control input-sm" id="piMergeSel"></select>
+                    <div class="piModalInfo" id="piMergePrazno">Nema stavki istog artikla za isti dan sa kojima se može spojiti.</div>
+                    <div class="piModalInfo">Nova količina: <b id="piMergeRez"></b></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Odustani</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="piMergeOk"><span class="glyphicon glyphicon-resize-small"></span> Merge</button>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+
 <script>
+
+    var PI_SLOT_H = 28;
+    var PI_POLJA = ['id', 'artikal', 'naziv', 'kolicina', 'min', 'boja', 'kat', 'status', 'statusKlasa', 'warn', 'dan'];
+
+    function piEsc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+        });
+    }
+
+    function piKg(n) { return (Math.round(n * 100) / 100) + ' kg'; }
+
+    function piVreme(ts) {
+        var d = new Date(parseInt(ts, 10) * 1000);
+        return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    }
+
+    function piDan(datum) {
+        var p = datum.split('-');
+        return (new Date(+p[0], +p[1] - 1, +p[2]).getDay() + 6) % 7 + 1;
+    }
+
+    function piSetData(el, d) {
+        PI_POLJA.forEach(function (k) {
+            if (d[k] !== undefined && d[k] !== null) el.dataset[k] = d[k];
+        });
+    }
+
+    // Isti oblik podataka za nerasporedjenu stavku i processItem na timeline-u;
+    // na timeline-u dan dolazi iz kolone, a trajanje iz visine
+    function piData(el) {
+        var d = {};
+        PI_POLJA.forEach(function (k) { d[k] = el.dataset[k]; });
+        var list = el.closest('.boxList');
+        if (list) {
+            d.dan = piDan(list.dataset.datum);
+            d.min = Math.round(el.offsetHeight / PI_SLOT_H) * 15;
+        }
+        d.kolicina = parseFloat(d.kolicina) || 0;
+        d.min = parseInt(d.min, 10) || 15;
+        d.dan = parseInt(d.dan, 10);
+        return d;
+    }
+
+    function piSkaliraj(min, kol, ukupno) {
+        return Math.max(15, Math.round(min * kol / ukupno / 15) * 15);
+    }
 
     // select2, mjsSearch, datepicker ostaju jQuery — zahtijevaju plugin
     $("#proizvodSel").select2();
@@ -347,6 +459,19 @@
             ucitajSideBar(btnInfo.dataset.row);
         }
 
+        var btnMeni = e.target.closest('.btnPiMenu');
+        if (btnMeni) {
+            piOtvoriMeni(btnMeni);
+        }
+
+        var akcija = e.target.closest('#piMenu [data-akcija]');
+        if (akcija) {
+            e.preventDefault();
+            piZatvoriMeni();
+            if (akcija.dataset.akcija === 'split') piOtvoriSplit(piCilj);
+            else piOtvoriMerge(piCilj);
+        }
+
         var slot = e.target.closest('.timeSlotRow');
         if (slot) {
             var ts = parseInt(slot.dataset.timestamp, 10);
@@ -421,9 +546,9 @@
         }
     }
 
-    function initDragDrop() {
-        $(".processItem").draggable({
-            cancel: ".resizeHandleTop, .resizeHandleBottom",
+    function initProcessItemDrag($el) {
+        $el.draggable({
+            cancel: ".resizeHandleTop, .resizeHandleBottom, .btnPiMenu",
             helper: "clone",
             revert: "invalid",
             zIndex: 1000,
@@ -432,8 +557,10 @@
             start: function () { $(this).addClass('dragging'); },
             stop: function () { $(this).removeClass('dragging'); }
         });
+    }
 
-        $(".neporedenaStavka").draggable({
+    function initNeporedenaDrag($el) {
+        $el.draggable({
             helper: "clone",
             revert: "invalid",
             appendTo: "body",
@@ -442,6 +569,191 @@
             opacity: 0.75,
             cursor: "grabbing"
         });
+    }
+
+    function processItemHtml(d) {
+        return '<div class="resizeHandleTop"></div>' +
+            '<div class="piRed">' +
+            '<button type="button" class="btnPiMenu" title="Opcije"><span class="caret"></span></button>' +
+            '<div class="piInfo btnArtikalInfo" data-row="' + piEsc(d.id) + '"><span class="piNaziv">' + piEsc(d.naziv) + '</span></div>' +
+            '<span class="piKol">' + piKg(d.kolicina) + '</span>' +
+            '</div>' +
+            '<div class="resizeHandleBottom"></div>';
+    }
+
+    function postaviNaTimeline(list, d, top) {
+        var h = Math.max(PI_SLOT_H, Math.round(d.min / 15) * PI_SLOT_H);
+        var el = document.createElement('div');
+        el.className = 'processItem';
+        el.style.cssText = 'position:absolute; top:' + top + 'px; left:36px; right:0; height:' + h + 'px;';
+        if (d.boja) el.style.borderLeftColor = d.boja;
+        piSetData(el, d);
+        el.innerHTML = processItemHtml(d);
+        el.dataset.resizeInit = '1';
+        list.appendChild(el);
+        updateItemTimes(el, buildSlotMap(list));
+        pushDisplacedItems(list, el, top, h);
+        initProcessItemDrag($(el));
+        return el;
+    }
+
+    var piCilj = null;
+    var piKandidati = [];
+
+    function piOtvoriMeni(btn) {
+        piCilj = btn.closest('.processItem, .neporedenaStavka');
+        var m = document.getElementById('piMenu');
+        var r = btn.getBoundingClientRect();
+        m.style.left = r.left + 'px';
+        m.style.top = (r.bottom + 2) + 'px';
+        m.style.display = 'block';
+    }
+
+    function piZatvoriMeni() {
+        document.getElementById('piMenu').style.display = 'none';
+    }
+
+    // Sadržaj modala se gradi iz <template> pri svakom otvaranju, jer ga zatvaranje modala može isprazniti
+    function piPripremiModal(id, tplId) {
+        document.getElementById(id).innerHTML = document.getElementById(tplId).innerHTML;
+    }
+
+    function piOtvoriSplit(el) {
+        piPripremiModal('piSplitModal', 'tplPiSplit');
+        var d = piData(el);
+        document.getElementById('piSplitNaziv').textContent = d.id + ' – ' + d.naziv;
+        document.getElementById('piSplitUkupno').textContent = piKg(d.kolicina);
+        document.getElementById('piSplitOpis').textContent = el.classList.contains('processItem')
+            ? 'Split ostaje na timeline-u, ostatak odlazi u nepoređene stavke.'
+            : 'Split postaje nova nepoređena stavka, ostatak ostaje u postojećoj.';
+        document.getElementById('piSplitKol').value = '';
+        document.getElementById('piSplitGreska').textContent = '';
+        piSplitOstatak();
+        $('#piSplitModal').modal('show');
+    }
+
+    function piSplitOstatak() {
+        var d = piData(piCilj);
+        var x = parseFloat(document.getElementById('piSplitKol').value) || 0;
+        document.getElementById('piSplitOstatak').textContent = piKg(Math.max(0, d.kolicina - x));
+    }
+
+    function piSplit(el, x) {
+        var d = piData(el);
+        var ostatak = Math.round((d.kolicina - x) * 100) / 100;
+        var split = Object.assign({}, d, { kolicina: x, min: piSkaliraj(d.min, x, d.kolicina) });
+        var rest = Object.assign({}, d, { kolicina: ostatak, min: piSkaliraj(d.min, ostatak, d.kolicina) });
+
+        if (el.classList.contains('processItem')) {
+            el.dataset.kolicina = x;
+            el.querySelector('.piKol').textContent = piKg(x);
+            el.style.height = (split.min / 15 * PI_SLOT_H) + 'px';
+            updateItemTimes(el, buildSlotMap(el.closest('.boxList')));
+            neporedeneDodaj(rest);
+        } else {
+            neporedeneRender(rest, el);
+            neporedeneDodaj(split, el);
+        }
+    }
+
+    // Merge je moguć samo između stavki istog artikla za isti dan
+    function piOtvoriMerge(el) {
+        piPripremiModal('piMergeModal', 'tplPiMerge');
+        var d = piData(el);
+        piKandidati = Array.from(document.querySelectorAll('.neporedenaStavka, .processItem')).filter(function (o) {
+            if (o === el || o.classList.contains('ui-draggable-dragging')) return false;
+            var od = piData(o);
+            return od.artikal === d.artikal && od.dan === d.dan;
+        });
+
+        var nep = '', tl = '';
+        piKandidati.forEach(function (o, i) {
+            var od = piData(o);
+            if (o.classList.contains('processItem')) {
+                tl += '<option value="' + i + '">' + piVreme(o.dataset.startTime) + ' – ' + piVreme(o.dataset.endTime) + ' · ' + piKg(od.kolicina) + '</option>';
+            } else {
+                nep += '<option value="' + i + '">' + piEsc(od.id) + ' · ' + piKg(od.kolicina) + ' · ' + od.min + ' min</option>';
+            }
+        });
+
+        var sel = document.getElementById('piMergeSel');
+        sel.innerHTML = (nep ? '<optgroup label="Nepoređene stavke">' + nep + '</optgroup>' : '') +
+            (tl ? '<optgroup label="Na timeline-u">' + tl + '</optgroup>' : '');
+        sel.style.display = piKandidati.length ? '' : 'none';
+        document.getElementById('piMergePrazno').style.display = piKandidati.length ? 'none' : '';
+        document.getElementById('piMergeOk').disabled = !piKandidati.length;
+        document.getElementById('piMergeNaziv').textContent = d.id + ' – ' + d.naziv;
+        document.getElementById('piMergeKol').textContent = piKg(d.kolicina);
+        piMergeRezultat();
+        $('#piMergeModal').modal('show');
+    }
+
+    function piMergeRezultat() {
+        var o = piKandidati[document.getElementById('piMergeSel').value];
+        document.getElementById('piMergeRez').textContent = o ? piKg(piData(piCilj).kolicina + piData(o).kolicina) : '–';
+    }
+
+    // Od dve stavke nastaje nova; ako je bar jedna na timeline-u, nova zauzima raniju poziciju
+    function piMerge(a, b) {
+        var da = piData(a), db = piData(b);
+        var d = Object.assign({}, da, {
+            kolicina: Math.round((da.kolicina + db.kolicina) * 100) / 100,
+            min: da.min + db.min
+        });
+        var t = [a, b].filter(function (o) { return o.classList.contains('processItem'); })
+            .sort(function (x, y) { return parseInt(x.style.top, 10) - parseInt(y.style.top, 10); })[0];
+
+        if (t) {
+            var list = t.closest('.boxList');
+            var top = parseInt(t.style.top, 10);
+            $(a).remove();
+            $(b).remove();
+            postaviNaTimeline(list, d, top);
+        } else {
+            neporedeneDodaj(d, a);
+            $(a).remove();
+            $(b).remove();
+        }
+        neporedeneOsvezi();
+    }
+
+    $('body > .piHost').remove();
+    $('#piHost').addClass('piHost').appendTo('body');
+
+    $('#piSplitModal').on('shown.bs.modal', function () { $('#piSplitKol').trigger('focus'); });
+
+    $(document).on('input', '#piSplitKol', piSplitOstatak);
+    $(document).on('keydown', '#piSplitKol', function (e) {
+        if (e.key === 'Enter') $('#piSplitOk').trigger('click');
+    });
+
+    $(document).on('click', '#piSplitOk', function () {
+        var d = piData(piCilj);
+        var x = parseFloat(document.getElementById('piSplitKol').value);
+        if (!(x > 0 && x < d.kolicina)) {
+            document.getElementById('piSplitGreska').textContent = 'Količina mora biti veća od 0 i manja od ' + piKg(d.kolicina) + '.';
+            return;
+        }
+        piSplit(piCilj, x);
+        $('#piSplitModal').modal('hide');
+    });
+
+    $(document).on('change', '#piMergeSel', piMergeRezultat);
+    $(document).on('click', '#piMergeOk', function () {
+        var o = piKandidati[document.getElementById('piMergeSel').value];
+        if (!o) return;
+        piMerge(piCilj, o);
+        $('#piMergeModal').modal('hide');
+    });
+
+    document.addEventListener('mousedown', function (e) {
+        if (!e.target.closest('#piMenu, .btnPiMenu')) piZatvoriMeni();
+    });
+    document.addEventListener('scroll', piZatvoriMeni, true);
+
+    function initDragDrop() {
+        initProcessItemDrag($(".processItem"));
+        initNeporedenaDrag($(".neporedenaStavka"));
 
         $(".timeContent").droppable({
             accept: ".processItem, .neporedenaStavka",
@@ -454,44 +766,9 @@
                 var slotH = 28;
 
                 if ($item.hasClass('neporedenaStavka')) {
-                    var id = $item.data('id');
-                    var naziv = $item.find('.stavkaNaziv').text().trim();
-                    var boja = $item.find('.stavkaLevaBoja')[0].style.backgroundColor;
-                    var minVal = parseInt($item.find('.stavkaTrajanje').text().replace(/\D/g, ''), 10) || 60;
-                    var h = Math.max(slotH, Math.round(minVal / 15) * slotH);
-
-                    var $novi = $('<div class="processItem"></div>').css({
-                        position: 'absolute',
-                        top: newTop + 'px',
-                        left: '36px',
-                        right: '0',
-                        height: h + 'px',
-                        borderLeftColor: boja
-                    });
-                    $novi.html(
-                        '<div style="display:flex;align-items:center;width:100%;padding:3px 6px;box-sizing:border-box;gap:4px;min-width:0;overflow:hidden;">' +
-                        '<div style="flex:1;min-width:0;cursor:pointer;" class="btnArtikalInfo" data-row="' + id + '">' +
-                        '<div style="font-weight:600;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + naziv + '</div>' +
-                        '</div></div>'
-                    );
-                    $(list).append($novi);
-                    $novi[0].insertAdjacentHTML('afterbegin', '<div class="resizeHandleTop"></div>');
-                    $novi[0].insertAdjacentHTML('beforeend', '<div class="resizeHandleBottom"></div>');
-                    $novi[0].dataset.resizeInit = '1';
-                    updateItemTimes($novi[0], buildSlotMap(list));
-                    pushDisplacedItems(list, $novi[0], newTop, h);
-                    $novi.draggable({
-                        cancel: ".resizeHandleTop, .resizeHandleBottom",
-                        helper: "clone",
-                        revert: "invalid",
-                        zIndex: 1000,
-                        scroll: false,
-                        opacity: 0.75
-                    });
-
+                    postaviNaTimeline(list, piData($item[0]), newTop);
                     $item.remove();
-                    var cnt = document.querySelector('#neporedeneCount');
-                    if (cnt) cnt.textContent = Math.max(0, parseInt(cnt.textContent, 10) - 1);
+                    neporedeneOsvezi();
                 } else {
                     var currentH = $item[0].offsetHeight || slotH;
                     $item.detach().appendTo(list).css({

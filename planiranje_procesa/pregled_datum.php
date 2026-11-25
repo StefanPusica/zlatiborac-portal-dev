@@ -11,7 +11,7 @@
             $icoStatus = "";
             $btnColor = "";
         ?>
-            <div class="processItem">
+            <div class="processItem" data-id="<?= $o->id; ?>" data-artikal="<?= $o->artikal; ?>" data-naziv="<?= htmlspecialchars($o->artikal . ' - ' . trim($o->artikal_naziv)); ?>" data-kolicina="<?= (float) $o->kolicina; ?>">
                 <? include 'pregled_process_item.php'; ?>
             </div>
             <?
