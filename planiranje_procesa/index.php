@@ -195,6 +195,81 @@
             </div>
         </div>
     </template>
+
+    <div class="modal fade" id="piDodajModal" tabindex="-1" role="dialog"></div>
+    <template id="tplPiDodaj">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Nova nepoređena stavka</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="piDodajForm" class="piDodajForm" autocomplete="off" novalidate>
+                        <div class="row">
+                            <div class="col-sm-4 form-group" data-polje="id">
+                                <label for="piDodajId">ID naloga *</label>
+                                <input type="number" class="form-control input-sm" id="piDodajId" name="id" min="1" step="1">
+                            </div>
+                            <div class="col-sm-4 form-group" data-polje="artikal">
+                                <label for="piDodajArtikal">Šifra artikla *</label>
+                                <input type="text" class="form-control input-sm" id="piDodajArtikal" name="artikal" maxlength="20">
+                            </div>
+                            <div class="col-sm-4 form-group" data-polje="dan">
+                                <label for="piDodajDan">Dan *</label>
+                                <select class="form-control input-sm" id="piDodajDan" name="dan"></select>
+                            </div>
+                        </div>
+                        <div class="form-group" data-polje="naziv">
+                            <label for="piDodajNaziv">Naziv *</label>
+                            <input type="text" class="form-control input-sm" id="piDodajNaziv" name="naziv" maxlength="100">
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-4 form-group" data-polje="kolicina">
+                                <label for="piDodajKolicina">Količina (kg) *</label>
+                                <input type="number" class="form-control input-sm" id="piDodajKolicina" name="kolicina" min="0" step="any">
+                            </div>
+                            <div class="col-sm-4 form-group" data-polje="min">
+                                <label for="piDodajMin">Trajanje (min) *</label>
+                                <input type="number" class="form-control input-sm" id="piDodajMin" name="min" min="15" step="15" value="15">
+                            </div>
+                            <div class="col-sm-4 form-group" data-polje="status">
+                                <label for="piDodajStatus">Status *</label>
+                                <select class="form-control input-sm" id="piDodajStatus" name="status">
+                                    <option value="">Izbor statusa</option>
+                                    <option value="nacrt">Nacrt</option>
+                                    <option value="odobreno">Odobreno</option>
+                                    <option value="spremno">Spremno</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-4 form-group" data-polje="kat">
+                                <label for="piDodajKat">Kategorija *</label>
+                                <input type="text" class="form-control input-sm" id="piDodajKat" name="kat" list="piDodajKatLista" maxlength="30">
+                                <datalist id="piDodajKatLista"></datalist>
+                            </div>
+                            <div class="col-sm-4 form-group" data-polje="boja">
+                                <label for="piDodajBoja">Boja *</label>
+                                <input type="color" class="form-control input-sm" id="piDodajBoja" name="boja" value="#94a3b8">
+                            </div>
+                            <div class="col-sm-4 form-group">
+                                <label>&nbsp;</label>
+                                <div class="checkbox" style="margin:4px 0 0;">
+                                    <label><input type="checkbox" id="piDodajWarn" name="warn"> Upozorenje</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-danger" id="piDodajGreska" style="font-size:11px;"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Odustani</button>
+                    <button type="button" class="btn btn-success btn-sm" id="piDodajOk"><span class="glyphicon glyphicon-plus"></span> Dodaj</button>
+                </div>
+            </div>
+        </div>
+    </template>
 </div>
 
 <script>
@@ -472,6 +547,10 @@
             else piOtvoriMerge(piCilj);
         }
 
+        if (e.target.closest('.neporedeneAddBtn')) {
+            piOtvoriDodaj();
+        }
+
         var slot = e.target.closest('.timeSlotRow');
         if (slot) {
             var ts = parseInt(slot.dataset.timestamp, 10);
@@ -687,6 +766,95 @@
         piMergeRezultat();
         $('#piMergeModal').modal('show');
     }
+
+    var PI_STATUSI = { nacrt: 'Nacrt', odobreno: 'Odobreno', spremno: 'Spremno' };
+
+    function piOtvoriDodaj() {
+        piPripremiModal('piDodajModal', 'tplPiDodaj');
+
+        var aktivan = document.querySelector('.neporedeneTab.active');
+        var danSel = document.getElementById('piDodajDan');
+        var html = '<option value="">Izbor dana</option>';
+        for (var i = 1; i <= 7; i++) {
+            html += '<option value="' + i + '"' + (aktivan && aktivan.dataset.dan === String(i) ? ' selected' : '') + '>' + neporedeneDanLabel(i) + '</option>';
+        }
+        danSel.innerHTML = html;
+
+        var kategorije = {};
+        document.querySelectorAll('.neporedenaStavka').forEach(function (el) {
+            if (el.dataset.kat) kategorije[el.dataset.kat] = true;
+        });
+        document.getElementById('piDodajKatLista').innerHTML = Object.keys(kategorije).map(function (k) {
+            return '<option value="' + piEsc(k) + '">';
+        }).join('');
+
+        $('#piDodajModal').modal('show');
+    }
+
+    function piDodajValidiraj() {
+        var f = document.getElementById('piDodajForm');
+        var v = function (n) { return f.elements[n].value.trim(); };
+        var d = {
+            id: v('id'),
+            artikal: v('artikal'),
+            naziv: v('naziv'),
+            kolicina: parseFloat(v('kolicina')),
+            min: parseInt(v('min'), 10),
+            dan: parseInt(v('dan'), 10),
+            kat: v('kat'),
+            boja: v('boja'),
+            statusKlasa: v('status'),
+            status: PI_STATUSI[v('status')],
+            warn: f.elements.warn.checked
+        };
+
+        var greske = {};
+        if (!/^\d+$/.test(d.id) || +d.id < 1) greske.id = 'ID naloga mora biti pozitivan ceo broj.';
+        if (!d.artikal) greske.artikal = 'Šifra artikla je obavezna.';
+        if (!d.naziv) greske.naziv = 'Naziv je obavezan.';
+        if (!(d.kolicina > 0)) greske.kolicina = 'Količina mora biti veća od 0.';
+        if (!(d.min >= 15) || d.min % 15 !== 0) greske.min = 'Trajanje mora biti najmanje 15 min, u koracima od 15.';
+        if (!(d.dan >= 1 && d.dan <= 7)) greske.dan = 'Dan je obavezan.';
+        if (!d.kat) greske.kat = 'Kategorija je obavezna.';
+        if (!/^#[0-9a-f]{6}$/i.test(d.boja)) greske.boja = 'Boja je obavezna.';
+        if (!d.status) greske.status = 'Status je obavezan.';
+
+        // Isti ID je dozvoljen samo za isti artikal (delovi istog naloga posle split-a)
+        if (!greske.id && !greske.artikal) {
+            var postojeci = document.querySelector('.neporedenaStavka[data-id="' + d.id + '"], .processItem[data-id="' + d.id + '"]');
+            if (postojeci && postojeci.dataset.artikal !== d.artikal) {
+                greske.id = 'ID ' + d.id + ' već postoji za artikal ' + postojeci.dataset.artikal + '.';
+            }
+        }
+
+        f.querySelectorAll('[data-polje]').forEach(function (g) {
+            g.classList.toggle('has-error', !!greske[g.dataset.polje]);
+        });
+        var poruke = Object.keys(greske).map(function (k) { return greske[k]; });
+        document.getElementById('piDodajGreska').innerHTML = poruke.map(piEsc).join('<br>');
+
+        return poruke.length ? null : d;
+    }
+
+    $(document).on('click', '#piDodajOk', function () {
+        var d = piDodajValidiraj();
+        if (!d) return;
+        var el = neporedeneDodaj(d);
+        if (el.style.display === 'none') {
+            document.querySelector('.neporedeneTab[data-dan="' + d.dan + '"]').click();
+        }
+        el.scrollIntoView({ block: 'nearest' });
+        $('#piDodajModal').modal('hide');
+    });
+
+    $(document).on('keydown', '#piDodajForm input', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            $('#piDodajOk').trigger('click');
+        }
+    });
+
+    $('#piDodajModal').on('shown.bs.modal', function () { $('#piDodajId').trigger('focus'); });
 
     function piMergeRezultat() {
         var o = piKandidati[document.getElementById('piMergeSel').value];
