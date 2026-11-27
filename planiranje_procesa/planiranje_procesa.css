@@ -587,7 +587,7 @@ ul.mUl > li:before {
     border-radius: 4px;
     font-size: 11px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     color: #1e293b;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
